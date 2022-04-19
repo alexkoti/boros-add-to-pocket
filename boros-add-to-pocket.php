@@ -51,6 +51,17 @@
 
 
 /**
+ * Redirect to login if not authenticated
+ * 
+ */
+add_action( 'wp_ajax_nopriv_batp', function(){
+    wp_redirect( wp_login_url( site_url( add_query_arg(array()) ) ) );
+    die();
+} );
+
+
+
+/**
  * Primary action
  * 
  */
