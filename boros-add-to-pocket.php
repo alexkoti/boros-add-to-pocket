@@ -48,6 +48,12 @@
  * 
  */
 
+
+
+/**
+ * Primary action
+ * 
+ */
 add_action( 'wp_ajax_batp', 'boros_add_to_pocket' );
 function boros_add_to_pocket(){
     
@@ -107,6 +113,131 @@ function boros_add_to_pocket(){
     echo '</pre>';
 
     die();
+}
+
+
+
+/**
+ * Init Admin controls if constant not defined
+ * 
+ */
+if( !defined('BOROS_POCKET') ){
+    $boros_add_to_pocket = new Boros_Add_To_Pocket_Admin();
+}
+
+
+
+/**
+ * Class admin page
+ * 
+ */
+class Boros_Add_To_Pocket_Admin {
+
+    /**
+     * Hooks
+     * 
+     */
+    public function __construct(){
+        add_action( 'admin_init', array($this, 'register_settings') );
+        add_action( 'admin_menu', array($this, 'add_menu_page') );
+        add_action( 'wp_ajax_batp_api_request', array($this, 'api_request') );
+        add_action( 'wp_ajax_batp_update_option', array($this, 'update_option') );
+    }
+
+    /**
+     * Register all settings fields
+     * 
+     */
+    final public function register_settings(){
+
+        add_settings_section(
+            'section_apis',
+            'Add to Pocket',
+            function( $args ){
+                echo 'Seção';
+            },
+            'batp_api_keys'
+        );
+
+        $fields = array(
+            array(
+                'type'  => 'text',
+                'name'  => 'batp_consumer_key',
+                'label' => 'Consumer key',
+            ),
+            array(
+                'type'  => 'text',
+                'name'  => 'batp_test',
+                'label' => 'Test field',
+            ),
+        );
+        foreach( $fields as $field ){
+            call_user_func( array($this, "add_setting_field_{$field['type']}"), $field );
+        }
+    }
+
+    /**
+     * Individual text fields, register and HTML
+     * 
+     */
+    private function add_setting_field_text( $field ){
+        register_setting( 'batp_api_keys', $field['name'] );
+        add_settings_field(
+            $field['name'], 
+            $field['label'], 
+            function( $args ){
+                $option = get_option( $args['field_name'] );
+                ?>
+                <input
+                    type="text"
+                    id="<?php echo esc_attr( $args['label_for'] ); ?>"
+                    name="<?php echo $args['field_name']; ?>"
+                    value="<?php echo esc_attr( $option ); ?>">
+                <?php
+            }, 
+            'batp_api_keys', 
+            'section_apis',
+            [
+                'label_for'  => "{$field['name']}-id",
+                'class'      => 'classe-html-tr',
+                'field_name' => $field['name'],
+            ]
+        );
+    }
+
+    /**
+     * Add admin menu item
+     * 
+     */
+    final public function add_menu_page(){
+        add_submenu_page( 'options-general.php', 'Add to Pocket', 'Add to Pocket', 'activate_plugins', 'batp-options', array($this, 'output') );
+        add_action( 'admin_print_footer_scripts', array($this, 'footer') );
+    }
+
+    final public function footer(){
+
+    }
+    
+    final public function output(){
+        ?>
+        <div class="wrap">
+            <h1>Add To Pocket</h1>
+            <form method="post" action="options.php">
+                <?php settings_fields( 'batp_api_keys' ); ?>
+                <?php do_settings_sections( 'batp_api_keys' ); ?>
+                <?php submit_button(); ?>
+            </form>
+        </div>
+        <?php
+    }
+
+    public function api_request(){
+
+    }
+
+    public function update_option(){
+
+    }
 }
 
 
