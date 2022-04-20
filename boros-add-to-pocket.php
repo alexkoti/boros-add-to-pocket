@@ -457,8 +457,10 @@ class Boros_Add_To_Pocket_Admin {
             margin: 10px 0 0;
             padding: 4px;
             width: 280px;
-            display: block;
             display: none;
+        }
+        .batp-bookmarklet-row img.active {
+            display: block;
         }
         .batp-bookmarklet-row .info {
             margin-left: 15px;
@@ -542,7 +544,7 @@ class Boros_Add_To_Pocket_Admin {
             });
 
             $('.batp-bookmarklet-row .info').on('click', function(){
-                $(this).next('img').toggle();
+                $(this).next('img').toggleClass('active');
             });
 
             function batp_update_option( elem, callback ){
