@@ -1,4 +1,4 @@
-<?php
+b<?php
 /**
  * Plugin Name: Boros Add to Pocket
  * Plugin URI:  https://alexkoti.com
@@ -141,11 +141,15 @@ function boros_add_to_pocket(){
  * Bookmarklet
  * 
  */
-function boros_add_to_pocket_bookmarklet(){
+function boros_add_to_pocket_bookmarklet( $echo = true ){
     $ajax_url = add_query_arg('action', 'batp', admin_url('admin-ajax.php'));
     $popup    = ", 'add-to-pocket', 'scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=600,height=300,left=100,top=100'";
     $link     = "javascript:{window.open('{$ajax_url}&url='+encodeURIComponent(window.location.href){$popup})}";
-    printf('Drag this link to the bookmarks bar: <a href="%s" class="button-secondary">+ add to pocket</a>', $link);
+    $bookmark = sprintf('Drag this link to the bookmarks bar: <a href="%s" class="button-secondary">+ add to pocket</a>', $link);
+    if( $echo == true ){
+        echo $bookmark;
+    }
+    return $bookmark;
 }
 
 
@@ -364,7 +368,12 @@ class Boros_Add_To_Pocket_Admin {
             'bookmarklet', 
             'Bookmarklet', 
             function(){
-                boros_add_to_pocket_bookmarklet();
+                printf(
+                    '<p>%s <span class="info">🛈 how to</span><img src="%sbookmarklet.gif" alt="bookmarklet"></p>', 
+                    boros_add_to_pocket_bookmarklet( false ), 
+                    plugins_url( '/', __FILE__ )
+                );
+
                 $consumer_key = !empty($this->options['batp_consumer_key']) ? $this->options['batp_consumer_key'] : '{CONSUMER_KEY}';
                 $access_token = !empty($this->options['batp_access_token']) ? $this->options['batp_access_token'] : '{ACCESS_TOKEN}';
                 $constant = "define( 'BOROS_POCKET', array('consumer_key' => '{$consumer_key}', 'access_token' => '{$access_token}') );";
@@ -442,6 +451,19 @@ class Boros_Add_To_Pocket_Admin {
         .batp-bookmarklet-row .button-secondary {
             vertical-align: middle;
         }
+        .batp-bookmarklet-row img {
+            background: rgba(0, 0, 0, 0.07);
+            border: 1px solid #8c8f94;
+            margin: 10px 0 0;
+            padding: 4px;
+            width: 280px;
+            display: block;
+            display: none;
+        }
+        .batp-bookmarklet-row .info {
+            margin-left: 15px;
+            cursor: pointer;
+        }
         </style>
         <?php
     }
@@ -517,6 +539,10 @@ class Boros_Add_To_Pocket_Admin {
                         spinner( field, 'off', false );
                     }
                 });
+            });
+
+            $('.batp-bookmarklet-row .info').on('click', function(){
+                $(this).next('img').toggle();
             });
 
             function batp_update_option( elem, callback ){
