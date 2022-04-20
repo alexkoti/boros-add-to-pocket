@@ -176,7 +176,7 @@ class Boros_Add_To_Pocket_Admin {
                 'type'  => 'text',
                 'name'  => 'batp_consumer_key',
                 'label' => 'Consumer key',
-                'extra' => false,
+                'extra' => array($this, 'consumer_button'),
             ),
             array(
                 'type'  => 'text',
@@ -216,7 +216,8 @@ class Boros_Add_To_Pocket_Admin {
                     type="text"
                     id="<?php echo esc_attr( $args['label_for'] ); ?>"
                     name="<?php echo $args['field_name']; ?>"
-                    value="<?php echo esc_attr( $option ); ?>">
+                    value="<?php echo esc_attr( $option ); ?>"
+                    class="regular-text code">
                 <?php
                 if( is_callable($args['extra']) ){
                     call_user_func( $args['extra'] );
@@ -238,20 +239,18 @@ class Boros_Add_To_Pocket_Admin {
             'authorize', 
             'Authorization', 
             function(){
-                $authorized = get_option('batp_authorized');
-                if( empty($authorized) ){
-                    $request_token = get_option('batp_request_token');
-                    if( !empty($request_token) ){
-                        printf('<a href="https://getpocket.com/auth/authorize?request_token=%s&redirect_uri=%s" id="authorize-link">Authorize App</a>', $request_token, site_url(add_query_arg('batp_authorized', '1')));
-                    }
-                }
-                else{
-                    echo 'Already authorized';
-                }
+                $request_token = get_option('batp_request_token', 'xxx');
+                printf('<a href="https://getpocket.com/auth/authorize?request_token=%s&redirect_uri=%s" id="authorize-link">Authorize App</a>', $request_token, site_url(add_query_arg('batp_authorized', '1')));
             }, 
             'batp_api_keys', 
             'section_apis'
         );
+    }
+
+    protected function consumer_button(){
+        ?>
+        <button type="button" class="button-secondary" id="consumer-button">Save Consumer Button</button>
+        <?php
     }
 
     protected function authorization_button(){
@@ -284,6 +283,11 @@ class Boros_Add_To_Pocket_Admin {
         ?>
         <script>
         jQuery(document).ready(function($){
+
+            $('#consumer-button').on('click', function(){
+                batp_update_option( $('#batp_consumer_key-id') );
+            });
+
             $('#authorization-button').on('click', function(){
                 console.log('authorization-button');
                 var consumer_key = $('#batp_consumer_key-id').val();
@@ -414,8 +418,6 @@ class Boros_Add_To_Pocket_Admin {
 
         if( wp_remote_retrieve_response_code( $response ) == 200 ){
             parse_str( wp_remote_retrieve_body($response), $response_values );
-            pel(wp_remote_retrieve_body($response));
-            pel($response_values);
             wp_send_json_success(array('access_token' => $response_values['access_token']));
         }
         else{
