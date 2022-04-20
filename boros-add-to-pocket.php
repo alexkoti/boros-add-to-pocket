@@ -488,6 +488,9 @@ class Boros_Add_To_Pocket_Admin {
                 var field = $('#batp_request_token-id');
                 spinner( field, 'on' );
 
+                var link = $('#authorize-link');
+                link.addClass('disabled');
+
                 var data = {
                     action:       'batp_get_request_token',
                     consumer_key: $('#batp_consumer_key-id').val(),
@@ -498,7 +501,6 @@ class Boros_Add_To_Pocket_Admin {
                     if( response.success == true ){
                         field.val( response.data.code );
                         batp_update_option(field, function(){
-                            var link    = $('#authorize-link');
                             var url     = new URL( link.attr('href') );
                             var params  = url.searchParams;
                             params.set('request_token', field.val());
