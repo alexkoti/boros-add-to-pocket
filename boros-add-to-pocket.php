@@ -73,10 +73,7 @@ function boros_add_to_pocket(){
      * 
      */
     if( empty($_GET['url']) ){
-        $ajax_url = add_query_arg('action', 'batp', admin_url('admin-ajax.php'));
-        $popup    = ", 'add-to-pocket', 'scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=600,height=300,left=100,top=100'";
-        $link     = "javascript:{window.open('{$ajax_url}&url='+encodeURIComponent(window.location.href){$popup})}";
-        printf('Drag this link to the bookmarks bar: <a href="%s">+ add to pocket</a>', $link);
+        boros_add_to_pocket_bookmarklet();
         die();
     }
 
@@ -136,6 +133,19 @@ function boros_add_to_pocket(){
     echo '</pre>';
 
     die();
+}
+
+
+
+/**
+ * Bookmarklet
+ * 
+ */
+function boros_add_to_pocket_bookmarklet(){
+    $ajax_url = add_query_arg('action', 'batp', admin_url('admin-ajax.php'));
+    $popup    = ", 'add-to-pocket', 'scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=600,height=300,left=100,top=100'";
+    $link     = "javascript:{window.open('{$ajax_url}&url='+encodeURIComponent(window.location.href){$popup})}";
+    printf('Drag this link to the bookmarks bar: <a href="%s">+ add to pocket</a>', $link);
 }
 
 
@@ -204,6 +214,9 @@ class Boros_Add_To_Pocket_Admin {
                 'name'  => 'batp_access_token',
                 'label' => 'Access Token',
                 'extra' => array($this, 'access_token_button'),
+            ),
+            array(
+                'type'  => 'bookmarklet',
             ),
         );
         foreach( $fields as $field ){
@@ -276,6 +289,21 @@ class Boros_Add_To_Pocket_Admin {
         );
     }
 
+    private function add_setting_field_bookmarklet( $field ){
+        add_settings_field(
+            'bookmarklet', 
+            'Bookmarklet', 
+            function(){
+                boros_add_to_pocket_bookmarklet();
+            }, 
+            'batp_api_keys', 
+            'section_apis',
+            [
+                'class' => 'batp-field-row batp-bookmarklet-row',
+            ]
+        );
+    }
+
     protected function consumer_button(){
         ?>
         <button type="button" class="button-secondary" id="consumer-button">Save Consumer Button</button>
@@ -316,6 +344,9 @@ class Boros_Add_To_Pocket_Admin {
         .batp-field-row a.disabled {
             opacity: 0.7;
             pointer-events: none;
+        }
+        .batp-bookmarklet-row {
+            display: none;
         }
         </style>
         <?php
@@ -401,6 +432,10 @@ class Boros_Add_To_Pocket_Admin {
                     }
                 });
             });
+
+            if( $('#batp_consumer_key-id').val() && $('#batp_request_token-id').val() ){
+                $('.batp-bookmarklet-row').show();
+            }
         });
         </script>
         <?php
