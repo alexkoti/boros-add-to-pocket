@@ -232,7 +232,7 @@ class Boros_Add_To_Pocket_Admin {
                 'type'  => 'text',
                 'name'  => 'batp_request_token',
                 'label' => 'Request Token',
-                'extra' => array($this, 'authorization_button'),
+                'extra' => array($this, 'request_button'),
             ),
             array(
                 'type'    => 'message',
@@ -380,10 +380,10 @@ class Boros_Add_To_Pocket_Admin {
         <?php
     }
 
-    protected function authorization_button(){
+    protected function request_button(){
         $disabled = empty($this->options['batp_consumer_key']) ? 'disabled' : '';
         ?>
-        <button type="button" class="button-secondary" id="authorization-button" <?php echo $disabled; ?>>Obtain a Request Token</button><span class="spinner"></span>
+        <button type="button" class="button-secondary" id="request-button" <?php echo $disabled; ?>>Obtain a Request Token</button><span class="spinner"></span>
         <?php
     }
 
@@ -446,12 +446,13 @@ class Boros_Add_To_Pocket_Admin {
             $('#consumer-button').on('click', function(){
                 var field = $('#batp_consumer_key-id');
                 spinner( field, 'on' );
+                $('#request-button').prop('disabled', true);
                 batp_update_option(field, function(){
-                    $('#authorization-button').prop('disabled', false);
+                    $('#request-button').prop('disabled', false);
                 });
             });
 
-            $('#authorization-button').on('click', function(){
+            $('#request-button').on('click', function(){
                 var field = $('#batp_request_token-id');
                 spinner( field, 'on' );
 
@@ -476,7 +477,7 @@ class Boros_Add_To_Pocket_Admin {
                     }
                     else{
                         alert(response.data.message);
-                        spinner( field, 'off' );
+                        spinner( field, 'off', false );
                     }
                 });
             });
@@ -503,7 +504,7 @@ class Boros_Add_To_Pocket_Admin {
                     }
                     else{
                         alert(response.data.message);
-                        spinner( field, 'off' );
+                        spinner( field, 'off', false );
                     }
                 });
             });
@@ -537,7 +538,7 @@ class Boros_Add_To_Pocket_Admin {
              * @elem jquery element of target input. The spinner will be searched from his parent.
              * 
              */
-            function spinner( elem, state ){
+            function spinner( elem, state, sucess = true ){
                 var spinner = elem.parent().find('.spinner');
                 var button  = elem.parent().find('button');
                 if( state == 'on' ){
@@ -546,7 +547,9 @@ class Boros_Add_To_Pocket_Admin {
                     spinner.addClass('is-active');
                 }
                 else{
-                    elem.prop('disabled', false);
+                    if( sucess == true ){
+                        elem.prop('disabled', false);
+                    }
                     button.prop('disabled', false);
                     spinner.removeClass('is-active');
                 }
@@ -590,7 +593,7 @@ class Boros_Add_To_Pocket_Admin {
             wp_send_json_success(array('code' => $code));
         }
         else{
-            wp_send_json_error(array('message' => 'Request failure'));
+            wp_send_json_error(array('message' => wp_remote_retrieve_header($response, 'x-error')));
         }
     }
     
@@ -616,7 +619,7 @@ class Boros_Add_To_Pocket_Admin {
             wp_send_json_success(array('access_token' => $response_values['access_token']));
         }
         else{
-            wp_send_json_error(array('message' => 'Request access_token failure'));
+            wp_send_json_error(array('message' => wp_remote_retrieve_header($response, 'x-error')));
         }
     }
 
