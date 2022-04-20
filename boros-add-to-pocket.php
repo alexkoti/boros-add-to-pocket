@@ -167,6 +167,12 @@ if( !defined('BOROS_POCKET') ){
 class Boros_Add_To_Pocket_Admin {
 
     /**
+     * Options values
+     * 
+     */
+    protected $options = array();
+
+    /**
      * Hooks
      * 
      */
@@ -183,6 +189,16 @@ class Boros_Add_To_Pocket_Admin {
      * 
      */
     final public function register_settings(){
+        
+        /**
+         * Retrieve all settings
+         * 
+         */
+        $this->options = array(
+            'batp_consumer_key'  => get_option('batp_consumer_key'),
+            'batp_request_token' => get_option('batp_request_token'),
+            'batp_access_token'  => get_option('batp_access_token'),
+        );
 
         add_settings_section(
             'section_apis',
@@ -229,21 +245,35 @@ class Boros_Add_To_Pocket_Admin {
      * 
      */
     private function add_setting_field_text( $field ){
+        global $plugin_page;
+
+        /**
+         * Always register settings
+         * 
+         */
         register_setting( 'batp_api_keys', $field['name'] );
+
+        /**
+         * Add settings fields only in plugin page
+         * 
+         */
+        if( $plugin_page != 'batp-options' ){
+            return;
+        }
 
         add_settings_field(
             $field['name'], 
             $field['label'], 
             function( $args ){
-                $option = get_option( $args['field_name'] );
+                $option = $this->options[ $args['field_name'] ];
                 $disabled = '';
                 if( empty($option) && $args['field_name'] != 'batp_consumer_key' ){
                     $disabled = 'disabled';
                 }
                 
-                if( $args['field_name'] == 'batp_access_token' && !empty(get_option('batp_request_token')) ){
-                    $disabled = '';
-                }
+                //if( $args['field_name'] == 'batp_access_token' && !empty($this->options['batp_request_token']) ){
+                //    $disabled = '';
+                //}
                 ?>
                 <input
                     type="text"
@@ -273,13 +303,13 @@ class Boros_Add_To_Pocket_Admin {
             'authorize', 
             'Authorization', 
             function(){
-                $option = get_option( 'batp_request_token' );
-                $disabled = '';
-                if( empty($option) ){
-                    $disabled = 'class="disabled"';
-                }
-                $request_token = get_option('batp_request_token', 'xxx');
-                printf('<a href="https://getpocket.com/auth/authorize?request_token=%s&redirect_uri=%s" id="authorize-link" %s>Authorize App</a>', $request_token, site_url(add_query_arg('batp_authorized', '1')), $disabled);
+                $disabled = empty($this->options['batp_request_token']) ? 'class="disabled"' : '';
+                printf(
+                    '<a href="https://getpocket.com/auth/authorize?request_token=%s&redirect_uri=%s" id="authorize-link" %s>Authorize App</a>', 
+                    $this->options['batp_request_token'], 
+                    site_url(add_query_arg('batp_authorized', '1')), 
+                    $disabled
+                );
             }, 
             'batp_api_keys', 
             'section_apis',
@@ -306,19 +336,21 @@ class Boros_Add_To_Pocket_Admin {
 
     protected function consumer_button(){
         ?>
-        <button type="button" class="button-secondary" id="consumer-button">Save Consumer Button</button>
+        <button type="button" class="button-secondary" id="consumer-button">Save Consumer Button</button><span class="spinner"></span>
         <?php
     }
 
     protected function authorization_button(){
+        $disabled = empty($this->options['batp_consumer_key']) ? 'disabled' : '';
         ?>
-        <button type="button" class="button-secondary" id="authorization-button">Obtain a Request Token</button>
+        <button type="button" class="button-secondary" id="authorization-button" <?php echo $disabled; ?>>Obtain a Request Token</button><span class="spinner"></span>
         <?php
     }
 
     protected function access_token_button(){
+        $disabled = empty($this->options['batp_request_token']) ? 'disabled' : '';
         ?>
-        <button type="button" class="button-secondary" id="access-token-button">Obtain a Access Token</button>
+        <button type="button" class="button-secondary" id="access-token-button" <?php echo $disabled; ?>>Obtain a Access Token</button><span class="spinner"></span>
         <?php
     }
 
@@ -340,10 +372,13 @@ class Boros_Add_To_Pocket_Admin {
     final public function styles(){
         ?>
         <style>
-        .batp-field-row [type="text"]:disabled + button,
         .batp-field-row a.disabled {
             opacity: 0.7;
             pointer-events: none;
+        }
+        .batp-field-row .spinner {
+            float: none;
+            margin-top: 0;
         }
         .batp-bookmarklet-row {
             display: none;
@@ -358,60 +393,47 @@ class Boros_Add_To_Pocket_Admin {
         jQuery(document).ready(function($){
 
             $('#consumer-button').on('click', function(){
-                batp_update_option( $('#batp_consumer_key-id') );
+                var field = $('#batp_consumer_key-id');
+                spinner( field, 'on' );
+                batp_update_option(field, function(){
+                    $('#authorization-button').prop('disabled', false);
+                });
             });
 
             $('#authorization-button').on('click', function(){
-                console.log('authorization-button');
-                var consumer_key = $('#batp_consumer_key-id').val();
+                var field = $('#batp_request_token-id');
+                spinner( field, 'on' );
+
                 var data = {
                     action:       'batp_get_request_token',
-                    consumer_key: consumer_key,
+                    consumer_key: $('#batp_consumer_key-id').val(),
                 }
-                console.log(data);
+                
                 $.post( ajaxurl, data, function( response ){
                     console.log( response );
                     if( response.success == true ){
-                        var request_token_field = $('#batp_request_token-id');
-                        request_token_field.val( response.data.code );
-                        batp_update_option( request_token_field );
+                        field.val( response.data.code );
+                        batp_update_option(field, function(){
+                            var link    = $('#authorize-link');
+                            var url     = new URL( link.attr('href') );
+                            var params  = url.searchParams;
+                            params.set('request_token', field.val());
+                            url.search  = params.toString();
+                            var new_url = url.toString();
+                            link.attr('href', new_url).removeClass('disabled');
+                        });
                     }
                     else{
                         alert(response.data.message);
+                        spinner( field, 'off' );
                     }
                 });
             });
 
-            function batp_update_option( elem ){
-                var data = {
-                    action:       'batp_update_option',
-                    option_name:  elem.attr('name'),
-                    option_value: elem.val(),
-                }
-                $.post( ajaxurl, data, function( response ){
-                    console.log( response );
-                    if( response.success == true ){
-                        console.log( 'sucesso' );
-                        if( elem.attr('id') == 'batp_consumer_key-id' ){
-                            $('#batp_request_token-id').prop('disabled', false);
-                        }
-                        else if( elem.attr('id') == 'batp_request_token-id' ){
-                            var url = new URL( $('#authorize-link').attr('href') );
-                            var params = url.searchParams;
-                            params.set('request_token', elem.val());
-                            url.search = params.toString();
-                            var new_url = url.toString();
-                            $('#authorize-link').attr('href', new_url).removeClass('disabled');
-                        }
-                    }
-                    else{
-                        alert(response.data.message);
-                    }
-                });
-            }
-
             $('#access-token-button').on('click', function(){
-                console.log('access-token-button');
+                var field = $('#batp_access_token-id');
+                spinner( field, 'on' );
+                
                 var consumer_key  = $('#batp_consumer_key-id').val();
                 var request_token = $('#batp_request_token-id').val();
                 var data = {
@@ -419,22 +441,64 @@ class Boros_Add_To_Pocket_Admin {
                     consumer_key:  consumer_key,
                     request_token: request_token,
                 }
-                console.log(data);
+                
                 $.post( ajaxurl, data, function( response ){
                     console.log( response );
                     if( response.success == true ){
-                        var access_token_field = $('#batp_access_token-id');
-                        access_token_field.val( response.data.access_token );
-                        batp_update_option( access_token_field );
+                        field.val( response.data.access_token );
+                        batp_update_option(field, function(){
+                            $('.batp-bookmarklet-row').show();
+                        });
                     }
                     else{
                         alert(response.data.message);
+                        spinner( field, 'off' );
                     }
                 });
             });
 
-            if( $('#batp_consumer_key-id').val() && $('#batp_request_token-id').val() ){
+            if( $('#batp_consumer_key-id').val() && $('#batp_access_token-id').val() ){
                 $('.batp-bookmarklet-row').show();
+            }
+
+            function batp_update_option( elem, callback ){
+
+                var data = {
+                    action:       'batp_update_option',
+                    option_name:  elem.attr('name'),
+                    option_value: elem.val(),
+                }
+
+                $.post( ajaxurl, data, function( response ){
+                    console.log( response );
+
+                    if( response.success == true ){
+                        callback();
+                    }
+                    else{
+                        alert(response.data.message);
+                    }
+                    spinner( elem, 'off' );
+                });
+            }
+
+            /**
+             * @elem jquery element of target input. The spinner will be searched from his parent.
+             * 
+             */
+            function spinner( elem, state ){
+                var spinner = elem.parent().find('.spinner');
+                var button  = elem.parent().find('button');
+                if( state == 'on' ){
+                    elem.prop('disabled', true);
+                    button.prop('disabled', true);
+                    spinner.addClass('is-active');
+                }
+                else{
+                    elem.prop('disabled', false);
+                    button.prop('disabled', false);
+                    spinner.removeClass('is-active');
+                }
             }
         });
         </script>
@@ -505,6 +569,10 @@ class Boros_Add_To_Pocket_Admin {
         }
     }
 
+    /**
+     * @todo check if value changed, if not, $updated will be false
+     * 
+     */
     public function update_option(){
 
         $option_name  = $_POST['option_name'];
