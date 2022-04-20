@@ -363,7 +363,7 @@ class Boros_Add_To_Pocket_Admin {
                 $consumer_key = !empty($this->options['batp_consumer_key']) ? $this->options['batp_consumer_key'] : '{CONSUMER_KEY}';
                 $access_token = !empty($this->options['batp_access_token']) ? $this->options['batp_access_token'] : '{ACCESS_TOKEN}';
                 $constant = "define( 'BOROS_POCKET', array('consumer_key' => '{$consumer_key}', 'access_token' => '{$access_token}') );";
-                printf('<hr><p>Optional: add the following constant in your wp-config.php file: <br><code>%s</code></p>', $constant);
+                printf('<hr><p>Optional: add the following constant in your wp-config.php file: <br><code id="batp-constant-code">%s</code></p>', $constant);
                 echo '<p>After that the current admin page will be disabled. Remove the constant to back the admin page.</p>';
             }, 
             'batp_api_keys', 
@@ -499,6 +499,8 @@ class Boros_Add_To_Pocket_Admin {
                     if( response.success == true ){
                         field.val( response.data.access_token );
                         batp_update_option(field, function(){
+                            var constant_code = $('#batp-constant-code').text().replace('{ACCESS_TOKEN}', $('#batp_access_token-id').val());
+                            $('#batp-constant-code').text(constant_code);
                             $('.batp-bookmarklet-row').show();
                         });
                     }
