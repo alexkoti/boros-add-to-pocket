@@ -227,6 +227,10 @@ class Boros_Add_To_Pocket_Admin {
                 if( empty($option) && $args['field_name'] != 'batp_consumer_key' ){
                     $disabled = 'disabled';
                 }
+                
+                if( $args['field_name'] == 'batp_access_token' && !empty(get_option('batp_request_token')) ){
+                    $disabled = '';
+                }
                 ?>
                 <input
                     type="text"
@@ -357,13 +361,16 @@ class Boros_Add_To_Pocket_Admin {
                     console.log( response );
                     if( response.success == true ){
                         console.log( 'sucesso' );
-                        if( elem.attr('id') == 'batp_request_token-id' ){
+                        if( elem.attr('id') == 'batp_consumer_key-id' ){
+                            $('#batp_request_token-id').prop('disabled', false);
+                        }
+                        else if( elem.attr('id') == 'batp_request_token-id' ){
                             var url = new URL( $('#authorize-link').attr('href') );
                             var params = url.searchParams;
                             params.set('request_token', elem.val());
                             url.search = params.toString();
                             var new_url = url.toString();
-                            $('#authorize-link').attr('href', new_url);
+                            $('#authorize-link').attr('href', new_url).removeClass('disabled');
                         }
                     }
                     else{
