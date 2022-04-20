@@ -5,16 +5,17 @@ WordPress plugin to add URL to Pocket via API. Created because the official Chro
 ## Create a Pocket App
 Visit https://getpocket.com/developer/, create new app and copy the "consumer key" 
 
-## wp-config.php installation:
+## Method 1: wp-config.php installation:
 Generate API keys via curl or Postman (ref: https://getpocket.com/developer/docs/authentication)
 
 Register constant BOROS_POCKET in wp-config.php:
-define( 'BOROS_POCKET', array('consumer_key' => 'XXXX', 'access_token' => 'XXXX') );
+
+`define( 'BOROS_POCKET', array('consumer_key' => 'XXXX', 'access_token' => 'XXXX') );`
 
 Access ajax address to get the bookmarklet: 
 SITE.com/wp-admin/admin-ajax.php?action=batp
 
-## wp-admin installation:
+## Method 2: wp-admin installation:
 Acess "Settings > Add to Pocket"
 
 1) Save Consumer key field
