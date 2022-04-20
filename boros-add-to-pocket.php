@@ -211,13 +211,18 @@ class Boros_Add_To_Pocket_Admin {
             $field['label'], 
             function( $args ){
                 $option = get_option( $args['field_name'] );
+                $disabled = '';
+                if( empty($option) && $args['field_name'] != 'batp_consumer_key' ){
+                    $disabled = 'disabled';
+                }
                 ?>
                 <input
                     type="text"
                     id="<?php echo esc_attr( $args['label_for'] ); ?>"
                     name="<?php echo $args['field_name']; ?>"
                     value="<?php echo esc_attr( $option ); ?>"
-                    class="regular-text code">
+                    class="regular-text code"
+                    <?php echo $disabled; ?>>
                 <?php
                 if( is_callable($args['extra']) ){
                     call_user_func( $args['extra'] );
@@ -227,7 +232,7 @@ class Boros_Add_To_Pocket_Admin {
             'section_apis',
             [
                 'label_for'  => "{$field['name']}-id",
-                'class'      => 'classe-html-tr',
+                'class'      => 'batp-field-row',
                 'field_name' => $field['name'],
                 'extra'      => $field['extra'],
             ]
@@ -239,11 +244,19 @@ class Boros_Add_To_Pocket_Admin {
             'authorize', 
             'Authorization', 
             function(){
+                $option = get_option( 'batp_request_token' );
+                $disabled = '';
+                if( empty($option) ){
+                    $disabled = 'class="disabled"';
+                }
                 $request_token = get_option('batp_request_token', 'xxx');
-                printf('<a href="https://getpocket.com/auth/authorize?request_token=%s&redirect_uri=%s" id="authorize-link">Authorize App</a>', $request_token, site_url(add_query_arg('batp_authorized', '1')));
+                printf('<a href="https://getpocket.com/auth/authorize?request_token=%s&redirect_uri=%s" id="authorize-link" %s>Authorize App</a>', $request_token, site_url(add_query_arg('batp_authorized', '1')), $disabled);
             }, 
             'batp_api_keys', 
-            'section_apis'
+            'section_apis',
+            [
+                'class' => 'batp-field-row',
+            ]
         );
     }
 
@@ -276,7 +289,20 @@ class Boros_Add_To_Pocket_Admin {
         //}
 
         add_submenu_page( 'options-general.php', 'Add to Pocket', 'Add to Pocket', 'activate_plugins', 'batp-options', array($this, 'output') );
+        add_action( 'admin_head', array($this, 'styles') );
         add_action( 'admin_print_footer_scripts', array($this, 'footer') );
+    }
+
+    final public function styles(){
+        ?>
+        <style>
+        .batp-field-row [type="text"]:disabled + button,
+        .batp-field-row a.disabled {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        </style>
+        <?php
     }
 
     final public function footer(){
