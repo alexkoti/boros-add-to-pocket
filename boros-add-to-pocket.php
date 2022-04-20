@@ -97,10 +97,22 @@ function boros_add_to_pocket(){
      * Request URL params
      * 
      */
-    $url_args = [
-        'consumer_key' => BOROS_POCKET['consumer_key'],
-        'access_token' => BOROS_POCKET['access_token'],
-    ];
+    if( defined('BOROS_POCKET') ){
+        $url_args = [
+            'consumer_key' => BOROS_POCKET['consumer_key'],
+            'access_token' => BOROS_POCKET['access_token'],
+        ];
+    }
+    else{
+        $url_args = [
+            'consumer_key' => get_option('batp_consumer_key'),
+            'access_token' => get_option('batp_access_token'),
+        ];
+    }
+
+    if( empty($url_args['consumer_key']) || empty($url_args['access_token']) ){
+        wp_die('Add to Pocket: API keys not set.');
+    }
 
     /**
      * Build request URL
