@@ -1,4 +1,4 @@
-b<?php
+<?php
 /**
  * Plugin Name: Boros Add to Pocket
  * Plugin URI:  https://alexkoti.com
@@ -478,9 +478,9 @@ class Boros_Add_To_Pocket_Admin {
             $('#consumer-button').on('click', function(){
                 var field = $('#batp_consumer_key-id');
                 spinner( field, 'on' );
-                $('#request-button').prop('disabled', true);
+                $('#request-button, #batp_request_token-id').prop('disabled', true);
                 batp_update_option(field, function(){
-                    $('#request-button').prop('disabled', false);
+                    $('#request-button, #batp_request_token-id').prop('disabled', false);
                 });
             });
 
