@@ -176,6 +176,11 @@ class Boros_Add_To_Pocket_Admin {
      */
     protected $options = array();
 
+    /**
+     * Static messages counter
+     * Used to define messages ids
+     * 
+     */
     protected $message_count = 0;
 
     /**
@@ -320,6 +325,10 @@ class Boros_Add_To_Pocket_Admin {
         );
     }
 
+    /**
+     * Row with static message
+     * 
+     */
     private function add_setting_field_message( $field ){
         $this->message_count++;
         add_settings_field(
@@ -337,6 +346,11 @@ class Boros_Add_To_Pocket_Admin {
         );
     }
 
+    /**
+     * Row with authorization link
+     * The link is dynamically updated on request_token response
+     * 
+     */
     private function add_setting_field_authorize( $field ){
         add_settings_field(
             'authorize', 
@@ -358,6 +372,10 @@ class Boros_Add_To_Pocket_Admin {
         );
     }
 
+    /**
+     * Row with bookmarklet HTML, gif help and example constant code
+     * 
+     */
     private function add_setting_field_bookmarklet( $field ){
         $row_class = 'batp-bookmarklet-row';
         if( !empty($this->options['batp_consumer_key']) && !empty($this->options['batp_access_token'])  ){
@@ -388,12 +406,21 @@ class Boros_Add_To_Pocket_Admin {
         );
     }
 
+    /**
+     * Button to save Consumer Key
+     * This button is never disabled
+     * 
+     */
     protected function consumer_button(){
         ?>
         <button type="button" class="button-secondary" id="consumer-button">Save Consumer Key</button><span class="spinner"></span>
         <?php
     }
 
+    /**
+     * Get Request Token
+     * 
+     */
     protected function request_button(){
         $disabled = empty($this->options['batp_consumer_key']) ? 'disabled' : '';
         ?>
@@ -401,6 +428,10 @@ class Boros_Add_To_Pocket_Admin {
         <?php
     }
 
+    /**
+     * Get Access Token
+     * 
+     */
     protected function access_token_button(){
         $disabled = empty($this->options['batp_request_token']) ? 'disabled' : '';
         ?>
@@ -423,6 +454,10 @@ class Boros_Add_To_Pocket_Admin {
         add_action( 'admin_print_footer_scripts', array($this, 'footer') );
     }
 
+    /**
+     * Styles on head
+     * 
+     */
     final public function styles(){
         ?>
         <style>
@@ -470,11 +505,19 @@ class Boros_Add_To_Pocket_Admin {
         <?php
     }
 
+    /**
+     * Javascript on footer
+     * 
+     */
     final public function footer(){
         ?>
         <script>
         jQuery(document).ready(function($){
 
+            /**
+             * Save consumer_key
+             * 
+             */
             $('#consumer-button').on('click', function(){
                 var field = $('#batp_consumer_key-id');
                 spinner( field, 'on' );
@@ -484,6 +527,10 @@ class Boros_Add_To_Pocket_Admin {
                 });
             });
 
+            /**
+             * Get request_token via ajax and update authorize link url
+             * 
+             */
             $('#request-button').on('click', function(){
                 var field = $('#batp_request_token-id');
                 spinner( field, 'on' );
@@ -516,6 +563,11 @@ class Boros_Add_To_Pocket_Admin {
                 });
             });
 
+            /**
+             * Get access_token via ajax
+             * On success, show the bookmarklet row and update constant example code
+             * 
+             */
             $('#access-token-button').on('click', function(){
                 var field = $('#batp_access_token-id');
                 spinner( field, 'on' );
@@ -545,10 +597,18 @@ class Boros_Add_To_Pocket_Admin {
                 });
             });
 
+            /**
+             * Toggle help image visibility
+             * 
+             */
             $('.batp-bookmarklet-row .info').on('click', function(){
                 $(this).next('img').toggleClass('active');
             });
 
+            /**
+             * Update option via ajax 
+             * 
+             */
             function batp_update_option( elem, callback ){
 
                 var data = {
@@ -571,6 +631,9 @@ class Boros_Add_To_Pocket_Admin {
             }
 
             /**
+             * Update spinner indicator
+             * Disable input and associated button, always enable button on response, but check if resquest success before
+             * enable input.
              * @elem jquery element of target input. The spinner will be searched from his parent.
              * 
              */
@@ -595,6 +658,10 @@ class Boros_Add_To_Pocket_Admin {
         <?php
     }
     
+    /**
+     * Output the admin page
+     * 
+     */
     final public function output(){
         ?>
         <div class="wrap">
