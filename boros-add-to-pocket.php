@@ -151,7 +151,8 @@ class Boros_Add_To_Pocket_Admin {
     public function __construct(){
         add_action( 'admin_init', array($this, 'register_settings') );
         add_action( 'admin_menu', array($this, 'add_menu_page') );
-        add_action( 'wp_ajax_batp_api_request', array($this, 'api_request') );
+        add_action( 'wp_ajax_batp_get_request_token', array($this, 'get_request_token') );
+        add_action( 'wp_ajax_batp_get_access_token', array($this, 'get_access_token') );
         add_action( 'wp_ajax_batp_update_option', array($this, 'update_option') );
     }
 
@@ -165,7 +166,7 @@ class Boros_Add_To_Pocket_Admin {
             'section_apis',
             'Add to Pocket',
             function( $args ){
-                echo 'Seção';
+                echo 'Add to Pocket configuration';
             },
             'batp_api_keys'
         );
@@ -175,11 +176,22 @@ class Boros_Add_To_Pocket_Admin {
                 'type'  => 'text',
                 'name'  => 'batp_consumer_key',
                 'label' => 'Consumer key',
+                'extra' => false,
             ),
             array(
                 'type'  => 'text',
-                'name'  => 'batp_test',
-                'label' => 'Test field',
+                'name'  => 'batp_request_token',
+                'label' => 'Request Token',
+                'extra' => array($this, 'authorization_button'),
+            ),
+            array(
+                'type'  => 'authorize',
+            ),
+            array(
+                'type'  => 'text',
+                'name'  => 'batp_access_token',
+                'label' => 'Access Token',
+                'extra' => array($this, 'access_token_button'),
             ),
         );
         foreach( $fields as $field ){
@@ -193,6 +205,7 @@ class Boros_Add_To_Pocket_Admin {
      */
     private function add_setting_field_text( $field ){
         register_setting( 'batp_api_keys', $field['name'] );
+
         add_settings_field(
             $field['name'], 
             $field['label'], 
@@ -205,6 +218,9 @@ class Boros_Add_To_Pocket_Admin {
                     name="<?php echo $args['field_name']; ?>"
                     value="<?php echo esc_attr( $option ); ?>">
                 <?php
+                if( is_callable($args['extra']) ){
+                    call_user_func( $args['extra'] );
+                }
             }, 
             'batp_api_keys', 
             'section_apis',
@@ -212,8 +228,42 @@ class Boros_Add_To_Pocket_Admin {
                 'label_for'  => "{$field['name']}-id",
                 'class'      => 'classe-html-tr',
                 'field_name' => $field['name'],
+                'extra'      => $field['extra'],
             ]
         );
+    }
+
+    private function add_setting_field_authorize( $field ){
+        add_settings_field(
+            'authorize', 
+            'Authorization', 
+            function(){
+                $authorized = get_option('batp_authorized');
+                if( empty($authorized) ){
+                    $request_token = get_option('batp_request_token');
+                    if( !empty($request_token) ){
+                        printf('<a href="https://getpocket.com/auth/authorize?request_token=%s&redirect_uri=%s" id="authorize-link">Authorize App</a>', $request_token, site_url(add_query_arg('batp_authorized', '1')));
+                    }
+                }
+                else{
+                    echo 'Already authorized';
+                }
+            }, 
+            'batp_api_keys', 
+            'section_apis'
+        );
+    }
+
+    protected function authorization_button(){
+        ?>
+        <button type="button" class="button-secondary" id="authorization-button">Obtain a Request Token</button>
+        <?php
+    }
+
+    protected function access_token_button(){
+        ?>
+        <button type="button" class="button-secondary" id="access-token-button">Obtain a Access Token</button>
+        <?php
     }
 
     /**
@@ -221,12 +271,90 @@ class Boros_Add_To_Pocket_Admin {
      * 
      */
     final public function add_menu_page(){
+
+        //if( isset($_GET['batp_authorized']) && $_GET['batp_authorized'] == 1 ){
+        //    update_option( 'batp_authorized', true );
+        //}
+
         add_submenu_page( 'options-general.php', 'Add to Pocket', 'Add to Pocket', 'activate_plugins', 'batp-options', array($this, 'output') );
         add_action( 'admin_print_footer_scripts', array($this, 'footer') );
     }
 
     final public function footer(){
+        ?>
+        <script>
+        jQuery(document).ready(function($){
+            $('#authorization-button').on('click', function(){
+                console.log('authorization-button');
+                var consumer_key = $('#batp_consumer_key-id').val();
+                var data = {
+                    action:       'batp_get_request_token',
+                    consumer_key: consumer_key,
+                }
+                console.log(data);
+                $.post( ajaxurl, data, function( response ){
+                    console.log( response );
+                    if( response.success == true ){
+                        var request_token_field = $('#batp_request_token-id');
+                        request_token_field.val( response.data.code );
+                        batp_update_option( request_token_field );
+                    }
+                    else{
+                        alert(response.data.message);
+                    }
+                });
+            });
 
+            function batp_update_option( elem ){
+                var data = {
+                    action:       'batp_update_option',
+                    option_name:  elem.attr('name'),
+                    option_value: elem.val(),
+                }
+                $.post( ajaxurl, data, function( response ){
+                    console.log( response );
+                    if( response.success == true ){
+                        console.log( 'sucesso' );
+                        if( elem.attr('id') == 'batp_request_token-id' ){
+                            var url = new URL( $('#authorize-link').attr('href') );
+                            var params = url.searchParams;
+                            params.set('request_token', elem.val());
+                            url.search = params.toString();
+                            var new_url = url.toString();
+                            $('#authorize-link').attr('href', new_url);
+                        }
+                    }
+                    else{
+                        alert(response.data.message);
+                    }
+                });
+            }
+
+            $('#access-token-button').on('click', function(){
+                console.log('access-token-button');
+                var consumer_key  = $('#batp_consumer_key-id').val();
+                var request_token = $('#batp_request_token-id').val();
+                var data = {
+                    action:        'batp_get_access_token',
+                    consumer_key:  consumer_key,
+                    request_token: request_token,
+                }
+                console.log(data);
+                $.post( ajaxurl, data, function( response ){
+                    console.log( response );
+                    if( response.success == true ){
+                        var access_token_field = $('#batp_access_token-id');
+                        access_token_field.val( response.data.access_token );
+                        batp_update_option( access_token_field );
+                    }
+                    else{
+                        alert(response.data.message);
+                    }
+                });
+            });
+        });
+        </script>
+        <?php
     }
     
     final public function output(){
@@ -242,12 +370,71 @@ class Boros_Add_To_Pocket_Admin {
         <?php
     }
 
-    public function api_request(){
+    public function get_request_token(){
+        
+        $consumer_key = $_POST['consumer_key'];
 
+        $params = array(
+            'consumer_key' => $consumer_key,
+            'redirect_uri' => site_url(add_query_arg()),
+        );
+
+        $response = wp_remote_post('https://getpocket.com/v3/oauth/request', array(
+            'headers'     => array('Content-Type' => 'application/json; charset=utf-8'),
+            'body'        => json_encode($params),
+            'method'      => 'POST',
+            'data_format' => 'body',
+        ));
+
+        if( wp_remote_retrieve_response_code( $response ) == 200 ){
+            $code = str_replace( 'code=', '', wp_remote_retrieve_body($response) );
+            wp_send_json_success(array('code' => $code));
+        }
+        else{
+            wp_send_json_error(array('message' => 'Request failure'));
+        }
+    }
+    
+    public function get_access_token(){
+        
+        $consumer_key  = $_POST['consumer_key'];
+        $request_token = $_POST['request_token'];
+
+        $params = array(
+            'consumer_key'  => $consumer_key,
+            'code'          => $request_token,
+        );
+
+        $response = wp_remote_post('https://getpocket.com/v3/oauth/authorize', array(
+            'headers'     => array('Content-Type' => 'application/json; charset=utf-8'),
+            'body'        => json_encode($params),
+            'method'      => 'POST',
+            'data_format' => 'body',
+        ));
+
+        if( wp_remote_retrieve_response_code( $response ) == 200 ){
+            parse_str( wp_remote_retrieve_body($response), $response_values );
+            pel(wp_remote_retrieve_body($response));
+            pel($response_values);
+            wp_send_json_success(array('access_token' => $response_values['access_token']));
+        }
+        else{
+            wp_send_json_error(array('message' => 'Request access_token failure'));
+        }
     }
 
     public function update_option(){
 
+        $option_name  = $_POST['option_name'];
+        $option_value = $_POST['option_value'];
+
+        $updated = update_option( $option_name, $option_value );
+        if( $updated === true ){
+            wp_send_json_success(array('message' => 'Option updated'));
+        }
+        else{
+            wp_send_json_error(array('message' => 'Request failure'));
+        }
     }
 }
 
