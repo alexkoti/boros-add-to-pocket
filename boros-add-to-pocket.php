@@ -572,6 +572,10 @@ class Boros_Add_To_Pocket_Admin {
         <?php
     }
 
+    /**
+     * @todo nonce and permission check
+     * 
+     */
     public function get_request_token(){
         
         $consumer_key = $_POST['consumer_key'];
@@ -597,6 +601,10 @@ class Boros_Add_To_Pocket_Admin {
         }
     }
     
+    /**
+     * @todo nonce and permission check
+     * 
+     */
     public function get_access_token(){
         
         $consumer_key  = $_POST['consumer_key'];
@@ -624,13 +632,21 @@ class Boros_Add_To_Pocket_Admin {
     }
 
     /**
-     * @todo check if value changed, if not, $updated will be false
+     * @todo nonce and permission check
      * 
      */
     public function update_option(){
 
         $option_name  = $_POST['option_name'];
         $option_value = $_POST['option_value'];
+
+        if( empty($option_value) ){
+            wp_send_json_error(array('message' => 'Empty value'));
+        }
+
+        if( $this->options[$option_name] == $option_value ){
+            wp_send_json_success(array('message' => 'Option value already saved'));
+        }
 
         $updated = update_option( $option_name, $option_value );
         if( $updated === true ){
