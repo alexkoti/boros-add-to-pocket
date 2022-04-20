@@ -145,7 +145,7 @@ function boros_add_to_pocket_bookmarklet(){
     $ajax_url = add_query_arg('action', 'batp', admin_url('admin-ajax.php'));
     $popup    = ", 'add-to-pocket', 'scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=600,height=300,left=100,top=100'";
     $link     = "javascript:{window.open('{$ajax_url}&url='+encodeURIComponent(window.location.href){$popup})}";
-    printf('Drag this link to the bookmarks bar: <a href="%s">+ add to pocket</a>', $link);
+    printf('Drag this link to the bookmarks bar: <a href="%s" class="button-secondary">+ add to pocket</a>', $link);
 }
 
 
@@ -171,6 +171,8 @@ class Boros_Add_To_Pocket_Admin {
      * 
      */
     protected $options = array();
+
+    protected $message_count = 0;
 
     /**
      * Hooks
@@ -211,10 +213,20 @@ class Boros_Add_To_Pocket_Admin {
 
         $fields = array(
             array(
+                'type'    => 'message',
+                'label'   => 'Step 1',
+                'message' => 'Visit <a href="https://getpocket.com/developer/" target="_blank">https://getpocket.com/developer/</a>, create new app, copy the <code>consumer key</code>,  paste in the field below, and hit <em>Save Consumer Key</em>.',
+            ),
+            array(
                 'type'  => 'text',
                 'name'  => 'batp_consumer_key',
                 'label' => 'Consumer key',
                 'extra' => array($this, 'consumer_button'),
+            ),
+            array(
+                'type'    => 'message',
+                'label'   => 'Step 2',
+                'message' => 'Click the <em>Obtain a Request Token</em> button and wait the key response.',
             ),
             array(
                 'type'  => 'text',
@@ -223,7 +235,17 @@ class Boros_Add_To_Pocket_Admin {
                 'extra' => array($this, 'authorization_button'),
             ),
             array(
+                'type'    => 'message',
+                'label'   => 'Step 3',
+                'message' => 'After Request Token, click <em>Authorize App</em> link and confirm authorization in Pocket page. You will be redirected back to this page.',
+            ),
+            array(
                 'type'  => 'authorize',
+            ),
+            array(
+                'type'    => 'message',
+                'label'   => 'Step 4',
+                'message' => 'After authorize app, click <em>Obtain a Access Token</em> and wait the response.<br>Note: every time you need generate a Access Token, you need to do Steps 2 and 3 before request a new Access Token.',
             ),
             array(
                 'type'  => 'text',
@@ -270,10 +292,6 @@ class Boros_Add_To_Pocket_Admin {
                 if( empty($option) && $args['field_name'] != 'batp_consumer_key' ){
                     $disabled = 'disabled';
                 }
-                
-                //if( $args['field_name'] == 'batp_access_token' && !empty($this->options['batp_request_token']) ){
-                //    $disabled = '';
-                //}
                 ?>
                 <input
                     type="text"
@@ -298,14 +316,31 @@ class Boros_Add_To_Pocket_Admin {
         );
     }
 
+    private function add_setting_field_message( $field ){
+        $this->message_count++;
+        add_settings_field(
+            "message-{$this->message_count}", 
+            $field['label'], 
+            function( $args ){
+                echo $args['message'];
+            }, 
+            'batp_api_keys', 
+            'section_apis',
+            [
+                'class'   => 'batp-message-row',
+                'message' => $field['message'],
+            ]
+        );
+    }
+
     private function add_setting_field_authorize( $field ){
         add_settings_field(
             'authorize', 
             'Authorization', 
             function(){
-                $disabled = empty($this->options['batp_request_token']) ? 'class="disabled"' : '';
+                $disabled = empty($this->options['batp_request_token']) ? 'disabled' : '';
                 printf(
-                    '<a href="https://getpocket.com/auth/authorize?request_token=%s&redirect_uri=%s" id="authorize-link" %s>Authorize App</a>', 
+                    '<a href="https://getpocket.com/auth/authorize?request_token=%s&redirect_uri=%s" id="authorize-link" class="button-secondary %s">Authorize App</a>', 
                     $this->options['batp_request_token'], 
                     site_url(add_query_arg('batp_authorized', '1')), 
                     $disabled
@@ -325,6 +360,11 @@ class Boros_Add_To_Pocket_Admin {
             'Bookmarklet', 
             function(){
                 boros_add_to_pocket_bookmarklet();
+                $consumer_key = !empty($this->options['batp_consumer_key']) ? $this->options['batp_consumer_key'] : '{CONSUMER_KEY}';
+                $access_token = !empty($this->options['batp_access_token']) ? $this->options['batp_access_token'] : '{ACCESS_TOKEN}';
+                $constant = "define( 'BOROS_POCKET', array('consumer_key' => '{$consumer_key}', 'access_token' => '{$access_token}') );";
+                printf('<hr><p>Optional: add the following constant in your wp-config.php file: <br><code>%s</code></p>', $constant);
+                echo '<p>After that the current admin page will be disabled. Remove the constant to back the admin page.</p>';
             }, 
             'batp_api_keys', 
             'section_apis',
@@ -336,7 +376,7 @@ class Boros_Add_To_Pocket_Admin {
 
     protected function consumer_button(){
         ?>
-        <button type="button" class="button-secondary" id="consumer-button">Save Consumer Button</button><span class="spinner"></span>
+        <button type="button" class="button-secondary" id="consumer-button">Save Consumer Key</button><span class="spinner"></span>
         <?php
     }
 
@@ -380,8 +420,19 @@ class Boros_Add_To_Pocket_Admin {
             float: none;
             margin-top: 0;
         }
+        .batp-message-row th,
+        .batp-message-row td {
+            padding-bottom: 0;
+        }
+        .batp-message-row + .batp-field-row th,
+        .batp-message-row + .batp-field-row td {
+            padding-top: 0;
+        }
         .batp-bookmarklet-row {
             display: none;
+        }
+        .batp-bookmarklet-row .button-secondary {
+            vertical-align: middle;
         }
         </style>
         <?php
