@@ -355,6 +355,11 @@ class Boros_Add_To_Pocket_Admin {
     }
 
     private function add_setting_field_bookmarklet( $field ){
+        $row_class = 'batp-bookmarklet-row';
+        if( !empty($this->options['batp_consumer_key']) && !empty($this->options['batp_access_token'])  ){
+            $row_class .= ' active';
+        }
+
         add_settings_field(
             'bookmarklet', 
             'Bookmarklet', 
@@ -369,7 +374,7 @@ class Boros_Add_To_Pocket_Admin {
             'batp_api_keys', 
             'section_apis',
             [
-                'class' => 'batp-field-row batp-bookmarklet-row',
+                'class' => $row_class,
             ]
         );
     }
@@ -430,6 +435,9 @@ class Boros_Add_To_Pocket_Admin {
         }
         .batp-bookmarklet-row {
             display: none;
+        }
+        .batp-bookmarklet-row.active {
+            display: table-row;
         }
         .batp-bookmarklet-row .button-secondary {
             vertical-align: middle;
@@ -501,7 +509,7 @@ class Boros_Add_To_Pocket_Admin {
                         batp_update_option(field, function(){
                             var constant_code = $('#batp-constant-code').text().replace('{ACCESS_TOKEN}', $('#batp_access_token-id').val());
                             $('#batp-constant-code').text(constant_code);
-                            $('.batp-bookmarklet-row').show();
+                            $('.batp-bookmarklet-row').addClass('active');
                         });
                     }
                     else{
@@ -510,10 +518,6 @@ class Boros_Add_To_Pocket_Admin {
                     }
                 });
             });
-
-            if( $('#batp_consumer_key-id').val() && $('#batp_access_token-id').val() ){
-                $('.batp-bookmarklet-row').show();
-            }
 
             function batp_update_option( elem, callback ){
 
