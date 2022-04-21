@@ -171,6 +171,16 @@ if( !defined('BOROS_POCKET') ){
 class Boros_Add_To_Pocket_Admin {
 
     /**
+     * Whitelist of options names allowed to be saved
+     * 
+     */
+    protected $allowed_options = array(
+        'batp_consumer_key',
+        'batp_request_token',
+        'batp_access_token',
+    );
+
+    /**
      * Options values
      * 
      */
@@ -301,15 +311,23 @@ class Boros_Add_To_Pocket_Admin {
                 if( empty($option) && $args['field_name'] != 'batp_consumer_key' ){
                     $disabled = 'disabled';
                 }
-                ?>
-                <input
-                    type="text"
-                    id="<?php echo esc_attr( $args['label_for'] ); ?>"
-                    name="<?php echo $args['field_name']; ?>"
-                    value="<?php echo esc_attr( $option ); ?>"
-                    class="regular-text code"
-                    <?php echo $disabled; ?>>
-                <?php
+                
+                // text field output
+                printf(
+                    '<input type="text" id="%s" name="%s" value="%s" class="regular-text code" %s>',
+                    esc_attr( $args['label_for'] ),
+                    $args['field_name'],
+                    esc_attr( $option ),
+                    $disabled
+                );
+
+                // hidden nonce field output
+                printf(
+                    '<input type="hidden" name="nonce-%s" value="%s">',
+                    $args['field_name'],
+                    wp_create_nonce( $args['field_name'] )
+                );
+
                 if( is_callable($args['extra']) ){
                     call_user_func( $args['extra'] );
                 }
@@ -615,7 +633,9 @@ class Boros_Add_To_Pocket_Admin {
                     action:       'batp_update_option',
                     option_name:  elem.attr('name'),
                     option_value: elem.val(),
+                    security:     elem.next('input[type="hidden"]').val(),
                 }
+                console.log(data);
 
                 $.post( ajaxurl, data, function( response ){
                     console.log( response );
@@ -743,8 +763,21 @@ class Boros_Add_To_Pocket_Admin {
         $option_name  = $_POST['option_name'];
         $option_value = $_POST['option_value'];
 
+        if( !in_array( $option_name, $this->allowed_options ) ){
+            wp_send_json_error(array('message' => 'Option not allowed'));
+        }
+
+        $ref_check = check_ajax_referer( $option_name, 'security', false );
+        if( $ref_check == false ){
+            wp_send_json_error(array('message' => 'Security error'));
+        }
+
         if( empty($option_value) ){
             wp_send_json_error(array('message' => 'Empty value'));
+        }
+
+        if( !current_user_can('manage_options') ){
+            wp_send_json_error(array('message' => 'You do not have permission to edit this option'));
         }
 
         if( $this->options[$option_name] == $option_value ){
