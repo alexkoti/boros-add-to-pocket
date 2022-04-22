@@ -10,6 +10,7 @@
  */
 
 
+
 /*
  * INSTRUCTIONS
  * Register constant in wp-config.php:
@@ -23,27 +24,15 @@
  * 
  * - options in wp-config constant: 
  *   - custom ajax action name
- *   - newtab
- *   - autoclose
  *   - add tags
  * - results page:
- *   - content
- *   - design
+ *   - better design
  *   - add tags interface
  *     - add tags javascript
  *     - add tags php request
  * - admin page:
- *   - auth:
- *     a) obtain request token ('code')
- *     b) authorize app
- *     c) obtain 'access_token'
- *   - option: add newtab
- *   - option: add autoclose
  *   - option: custom ajax action name
  *   - option: delete tokens
- *   - admin page css
- *   - admin page javascript
- * 
  * 
  */
 
@@ -110,6 +99,9 @@ function boros_add_to_pocket(){
         wp_die('Add to Pocket: API keys not set.');
     }
 
+    // test force error on add
+    //$url_args['access_token'] = 'force-error';
+
     /**
      * Build request URL
      * 
@@ -117,7 +109,7 @@ function boros_add_to_pocket(){
     $pocket_url = add_query_arg($url_args, 'https://getpocket.com/v3/send');
 
     /*
-     * Make request to GetPocket API 
+     * Make request to GetPocket API
      * 
      */
     $data = wp_remote_post($pocket_url, [
@@ -127,9 +119,63 @@ function boros_add_to_pocket(){
         'data_format' => 'body',
     ]);
 
-    echo '<pre>';
-    print_r($data);
-    echo '</pre>';
+    $response_code    = wp_remote_retrieve_response_code( $data );
+    $response_message = wp_remote_retrieve_response_message( $data );
+    $response_body    = json_decode( wp_remote_retrieve_body( $data ) );
+
+    $body  = array();
+    $title = '';
+
+    if( $response_code == 200 ){
+        $title = 'Added to Pocket';
+        $body[] = '<h1>Added to Pocket</h1>';
+        foreach( $response_body->action_results as $result ){
+            //pre($result, 'result', false);
+            if( isset($result->images) ){
+                foreach( $result->images as $index => $image ){
+                    if( $index == 1 ){
+                        $body[] = sprintf('<img src="%s" class="item-image" alt="%s">', $image->src, $result->title);
+                    }
+                }
+            }
+            $body[] = sprintf(
+                '<h2 class="item-title">
+                    <img src="https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=24&url=%s" alt="favicon"> 
+                    <a href="%s">%s</a>
+                </h2>', 
+                $result->normal_url, 
+                $result->normal_url,
+                $result->title
+            );
+            $body[] = sprintf('<p class="item-url">%s</p>', $result->normal_url);
+            $body[] = sprintf('<hr><p class="item-excerpt">%s</p>', $result->excerpt);
+        }
+    }
+    else{
+        $title  = 'Request error';
+        $body[] = '<h1>Add to Pocket</h1>';
+        $body[] = '<h2>Request error</h2>';
+        $body[] = sprintf('<p>%s %s</p>', $response_code, $response_message);
+    }
+
+    printf('<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>%s</title>
+        <style>
+        body {font-family:monospace;margin:0 auto;max-width:550px;}
+        .item-image {border:1px solid;display:block;margin:0 auto 1rem;padding:10px;}
+        .item-title {font-size:18px;line-height:26px;}
+        img {vertical-align:text-bottom;}
+        </style>
+    </head>
+    <body>
+        %s
+    </body>
+    </html>', $title, implode('', $body));
 
     die();
 }
@@ -142,7 +188,7 @@ function boros_add_to_pocket(){
  */
 function boros_add_to_pocket_bookmarklet( $echo = true ){
     $ajax_url = add_query_arg('action', 'batp', admin_url('admin-ajax.php'));
-    $popup    = ", 'add-to-pocket', 'scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=600,height=300,left=100,top=100'";
+    $popup    = ", 'add-to-pocket', 'scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=600,height=500,left=100,top=100'";
     $link     = "javascript:{window.open('{$ajax_url}&url='+encodeURIComponent(window.location.href){$popup})}";
     $bookmark = sprintf('Drag this link to the bookmarks bar: <a href="%s" class="button-secondary">+ add to pocket</a>', $link);
     if( $echo == true ){
