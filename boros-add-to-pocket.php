@@ -21,7 +21,6 @@
  * 
  * @todo
  * 
- * - error handling in wp_remote_post()
  * - options in wp-config constant: 
  *   - custom ajax action name
  *   - newtab
@@ -219,6 +218,7 @@ class Boros_Add_To_Pocket_Admin {
             'batp_consumer_key'  => get_option('batp_consumer_key'),
             'batp_request_token' => get_option('batp_request_token'),
             'batp_access_token'  => get_option('batp_access_token'),
+            'batp_auth_status'   => get_option('batp_auth_status'),
         );
 
         add_settings_section(
@@ -374,11 +374,17 @@ class Boros_Add_To_Pocket_Admin {
             'authorize', 
             'Authorization', 
             function(){
-                $disabled = empty($this->options['batp_request_token']) ? 'disabled' : '';
+                $disabled = '';
+                $append   = '';
+
+                if( empty($this->options['batp_request_token']) || $this->options['batp_auth_status'] != 'generated' ){
+                    $disabled = 'disabled';
+                }
+
                 printf(
                     '<a href="https://getpocket.com/auth/authorize?request_token=%s&redirect_uri=%s" id="authorize-link" class="button-secondary %s">Authorize App</a>', 
                     $this->options['batp_request_token'], 
-                    site_url(add_query_arg('batp_authorized', '1')), 
+                    site_url(add_query_arg()), 
                     $disabled
                 );
             }, 
@@ -451,7 +457,12 @@ class Boros_Add_To_Pocket_Admin {
      * 
      */
     protected function access_token_button(){
-        $disabled = empty($this->options['batp_request_token']) ? 'disabled' : '';
+        $request_token        = $this->options['batp_request_token'];
+        $authorization_status = $this->options['batp_auth_status'];
+        $disabled             = 'disabled';
+        if( !empty($request_token) && $authorization_status != 'authorized' ){
+            $disabled = '';
+        }
         ?>
         <button type="button" class="button-secondary" id="access-token-button" <?php echo $disabled; ?>>Obtain a Access Token</button><span class="spinner"></span>
         <?php
@@ -462,11 +473,6 @@ class Boros_Add_To_Pocket_Admin {
      * 
      */
     final public function add_menu_page(){
-
-        //if( isset($_GET['batp_authorized']) && $_GET['batp_authorized'] == 1 ){
-        //    update_option( 'batp_authorized', true );
-        //}
-
         add_submenu_page( 'options-general.php', 'Add to Pocket', 'Add to Pocket', 'activate_plugins', 'batp-options', array($this, 'output') );
         add_action( 'admin_head', array($this, 'styles') );
         add_action( 'admin_print_footer_scripts', array($this, 'footer') );
@@ -843,6 +849,12 @@ class Boros_Add_To_Pocket_Admin {
 
         $updated = update_option( $option_name, $option_value );
         if( $updated === true ){
+            if( $option_name == 'batp_request_token' ){
+                update_option( 'batp_auth_status', 'generated' );
+            }
+            elseif( $option_name == 'batp_access_token' ){
+                update_option( 'batp_auth_status', 'authorized' );
+            }
             wp_send_json_success(array('message' => 'Option updated'));
         }
         else{
