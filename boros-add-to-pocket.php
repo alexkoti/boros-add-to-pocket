@@ -27,6 +27,7 @@
  *   - add tags
  * - results page:
  *   - better design
+ *   - bookmarklet page design (show gif image)
  *   - add tags interface
  *     - add tags javascript
  *     - add tags php request
@@ -166,8 +167,8 @@ function boros_add_to_pocket(){
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>%s</title>
         <style>
-        body {font-family:monospace;margin:0 auto;max-width:550px;}
-        .item-image {border:1px solid;display:block;margin:0 auto 1rem;padding:10px;}
+        body {font-family:monospace;margin:0 auto;padding:0 1rem;max-width:550px;}
+        .item-image {border:1px solid;display:block;margin:0 auto 1rem;padding:1rem;}
         .item-title {font-size:18px;line-height:26px;}
         img {vertical-align:text-bottom;}
         </style>
