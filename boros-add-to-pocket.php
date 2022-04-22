@@ -559,6 +559,7 @@ class Boros_Add_To_Pocket_Admin {
                 var data = {
                     action:       'batp_get_request_token',
                     consumer_key: $('#batp_consumer_key-id').val(),
+                    security:     field.next('input[type="hidden"]').val(),
                 }
                 
                 $.post( ajaxurl, data, function( response ){
@@ -596,6 +597,7 @@ class Boros_Add_To_Pocket_Admin {
                     action:        'batp_get_access_token',
                     consumer_key:  consumer_key,
                     request_token: request_token,
+                    security:      field.next('input[type="hidden"]').val(),
                 }
                 
                 $.post( ajaxurl, data, function( response ){
@@ -696,12 +698,25 @@ class Boros_Add_To_Pocket_Admin {
     }
 
     /**
-     * @todo nonce and permission check
+     * Save Request Token
      * 
      */
     public function get_request_token(){
         
         $consumer_key = $_POST['consumer_key'];
+
+        $ref_check = check_ajax_referer( 'batp_request_token', 'security', false );
+        if( $ref_check == false ){
+            wp_send_json_error(array('message' => 'Security error'));
+        }
+
+        if( empty($consumer_key) ){
+            wp_send_json_error(array('message' => 'Empty value'));
+        }
+
+        if( !current_user_can('manage_options') ){
+            wp_send_json_error(array('message' => 'You do not have permission to request a new token'));
+        }
 
         $params = array(
             'consumer_key' => $consumer_key,
@@ -725,13 +740,30 @@ class Boros_Add_To_Pocket_Admin {
     }
     
     /**
-     * @todo nonce and permission check
+     * Save Access Token
      * 
      */
     public function get_access_token(){
         
         $consumer_key  = $_POST['consumer_key'];
         $request_token = $_POST['request_token'];
+
+        $ref_check = check_ajax_referer( 'batp_access_token', 'security', false );
+        if( $ref_check == false ){
+            wp_send_json_error(array('message' => 'Security error'));
+        }
+
+        if( empty($consumer_key) ){
+            wp_send_json_error(array('message' => 'Empty Consumer Key'));
+        }
+
+        if( empty($request_token) ){
+            wp_send_json_error(array('message' => 'Empty Request Token'));
+        }
+
+        if( !current_user_can('manage_optionsa') ){
+            wp_send_json_error(array('message' => 'You do not have permission to request a new token'));
+        }
 
         $params = array(
             'consumer_key'  => $consumer_key,
@@ -755,7 +787,7 @@ class Boros_Add_To_Pocket_Admin {
     }
 
     /**
-     * @todo nonce and permission check
+     * Update single option
      * 
      */
     public function update_option(){
