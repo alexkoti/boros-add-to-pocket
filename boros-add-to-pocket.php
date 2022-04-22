@@ -541,7 +541,7 @@ class Boros_Add_To_Pocket_Admin {
                 spinner( field, 'on' );
                 $('#request-button, #batp_request_token-id').prop('disabled', true);
                 batp_update_option(field, function(){
-                    $('#request-button, #batp_request_token-id').prop('disabled', false);
+                    $('#request-button').prop('disabled', false);
                 });
             });
 
@@ -562,22 +562,30 @@ class Boros_Add_To_Pocket_Admin {
                     security:     field.next('input[type="hidden"]').val(),
                 }
                 
-                $.post( ajaxurl, data, function( response ){
-                    console.log( response );
-                    if( response.success == true ){
-                        field.val( response.data.code );
-                        batp_update_option(field, function(){
-                            var url     = new URL( link.attr('href') );
-                            var params  = url.searchParams;
-                            params.set('request_token', field.val());
-                            url.search  = params.toString();
-                            var new_url = url.toString();
-                            link.attr('href', new_url).removeClass('disabled');
-                        });
-                    }
-                    else{
-                        alert(response.data.message);
-                        spinner( field, 'off', false );
+                $.ajax({
+                    type:    'POST',
+                    url:     ajaxurl,
+                    data:    data,
+                    success: function( response ){
+                        if( response.success == true ){
+                            field.val( response.data.code );
+                            batp_update_option(field, function(){
+                                var url     = new URL( link.attr('href') );
+                                var params  = url.searchParams;
+                                params.set('request_token', field.val());
+                                url.search  = params.toString();
+                                var new_url = url.toString();
+                                link.attr('href', new_url).removeClass('disabled');
+                            });
+                        }
+                        else{
+                            alert(response.data.message);
+                            spinner( field, 'off', false );
+                        }
+                    },
+                    error: function( XMLHttpRequest, textStatus, errorThrown ){
+                        alert('Error in server response.');
+                            spinner( field, 'off', false );
                     }
                 });
             });
@@ -600,18 +608,27 @@ class Boros_Add_To_Pocket_Admin {
                     security:      field.next('input[type="hidden"]').val(),
                 }
                 
-                $.post( ajaxurl, data, function( response ){
-                    console.log( response );
-                    if( response.success == true ){
-                        field.val( response.data.access_token );
-                        batp_update_option(field, function(){
-                            var constant_code = $('#batp-constant-code').text().replace('{ACCESS_TOKEN}', $('#batp_access_token-id').val());
-                            $('#batp-constant-code').text(constant_code);
-                            $('.batp-bookmarklet-row').addClass('active');
-                        });
-                    }
-                    else{
-                        alert(response.data.message);
+                $.ajax({
+                    type:    'POST',
+                    url:     ajaxurl,
+                    data:    data,
+                    success: function( response ){
+                        console.log( response );
+                        if( response.success == true ){
+                            field.val( response.data.access_token );
+                            batp_update_option(field, function(){
+                                var constant_code = $('#batp-constant-code').text().replace('{ACCESS_TOKEN}', $('#batp_access_token-id').val());
+                                $('#batp-constant-code').text(constant_code);
+                                $('.batp-bookmarklet-row').addClass('active');
+                            });
+                        }
+                        else{
+                            alert(response.data.message);
+                            spinner( field, 'off', false );
+                        }
+                    },
+                    error: function( XMLHttpRequest, textStatus, errorThrown ){
+                        alert('Error in server response.');
                         spinner( field, 'off', false );
                     }
                 });
@@ -639,16 +656,24 @@ class Boros_Add_To_Pocket_Admin {
                 }
                 console.log(data);
 
-                $.post( ajaxurl, data, function( response ){
-                    console.log( response );
-
-                    if( response.success == true ){
-                        callback();
+                $.ajax({
+                    type:    'POST',
+                    url:     ajaxurl,
+                    data:    data,
+                    success: function( response ){
+                        console.log( response );
+                        if( response.success == true ){
+                            callback();
+                        }
+                        else{
+                            alert(response.data.message);
+                        }
+                        spinner( elem, 'off' );
+                    },
+                    error: function( XMLHttpRequest, textStatus, errorThrown ){
+                        alert('Error in server response.');
+                        spinner( elem, 'off' );
                     }
-                    else{
-                        alert(response.data.message);
-                    }
-                    spinner( elem, 'off' );
                 });
             }
 
@@ -761,7 +786,7 @@ class Boros_Add_To_Pocket_Admin {
             wp_send_json_error(array('message' => 'Empty Request Token'));
         }
 
-        if( !current_user_can('manage_optionsa') ){
+        if( !current_user_can('manage_options') ){
             wp_send_json_error(array('message' => 'You do not have permission to request a new token'));
         }
 
