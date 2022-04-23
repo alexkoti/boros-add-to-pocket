@@ -32,3 +32,13 @@ All steps are autosaved.
 - [ ] Better design in results page
 - [ ] Custom ajax action name
 - [ ] Uninstall/Delete wp functions
+- [ ] Internationalization
+
+### Goals
+My goals with this plugin are:
+1. Solve a problem: save links in GetPocket via API.
+2. Study some common challenges in WordPress development:
+    - Authentication and queries to an external API.
+    - WordPress options page creation, using native functions.
+    - Dynamic interaction with form controls using AJAX requests.
+3. Maintain a public plugin with Github releases.
