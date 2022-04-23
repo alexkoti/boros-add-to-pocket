@@ -24,3 +24,11 @@ Acess "Settings > Add to Pocket"
 4) Click "Obtain a Access Token" button
 
 All steps are autosaved.
+
+### ToDo
+
+- [] Bookmarklet page design
+- [] Add tags controls in results page
+- [] Better design in results page
+- [] Custom ajax action name
+- [] Uninstall/Delete wp functions
