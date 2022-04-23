@@ -44,7 +44,7 @@
  * 
  */
 add_action( 'wp_ajax_nopriv_batp', function(){
-    wp_redirect( wp_login_url( site_url( add_query_arg(array()) ) ) );
+    wp_redirect( wp_login_url( add_query_arg(array()) ) );
     die();
 } );
 
@@ -129,7 +129,7 @@ function boros_add_to_pocket(){
 
     if( $response_code == 200 ){
         $title = 'Added to Pocket';
-        $body[] = '<h1>Added to Pocket</h1>';
+        $body[] = '<h1>Added to Pocket!!!</h1>';
         foreach( $response_body->action_results as $result ){
             //pre($result, 'result', false);
             if( isset($result->images) ){
@@ -168,7 +168,7 @@ function boros_add_to_pocket(){
         <title>%s</title>
         <style>
         body {font-family:monospace;margin:0 auto;padding:0 1rem;max-width:550px;}
-        .item-image {border:1px solid;display:block;margin:0 auto 1rem;padding:1rem;}
+        .item-image {border:1px solid;display:block;margin:0 auto 1rem;padding:0.5rem;max-height:300px;max-width:calc(100%% - 1rem - 2px);}
         .item-title {font-size:18px;line-height:26px;}
         img {vertical-align:text-bottom;}
         </style>
@@ -189,7 +189,7 @@ function boros_add_to_pocket(){
  */
 function boros_add_to_pocket_bookmarklet( $echo = true ){
     $ajax_url = add_query_arg('action', 'batp', admin_url('admin-ajax.php'));
-    $popup    = ", 'add-to-pocket', 'scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=600,height=500,left=100,top=100'";
+    $popup    = ", 'add-to-pocket', 'scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=600,height=600,left=100,top=100'";
     $link     = "javascript:{window.open('{$ajax_url}&url='+encodeURIComponent(window.location.href){$popup})}";
     $bookmark = sprintf('Drag this link to the bookmarks bar: <a href="%s" class="button-secondary">+ add to pocket</a>', $link);
     if( $echo == true ){
