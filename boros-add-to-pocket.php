@@ -44,7 +44,7 @@
  * 
  */
 add_action( 'wp_ajax_nopriv_batp', function(){
-    wp_redirect( wp_login_url( add_query_arg(array()) ) );
+    wp_redirect( wp_login_url( add_query_arg([]) ) );
     die();
 } );
 
@@ -437,7 +437,7 @@ class Boros_Add_To_Pocket_Admin {
                 printf(
                     '<a href="https://getpocket.com/auth/authorize?request_token=%s&redirect_uri=%s" id="authorize-link" class="button-secondary %s">Authorize App</a>', 
                     $this->options['batp_request_token'], 
-                    site_url(add_query_arg()), 
+                    site_url(add_query_arg([])), 
                     $disabled
                 );
             }, 
@@ -804,7 +804,7 @@ class Boros_Add_To_Pocket_Admin {
 
         $params = array(
             'consumer_key' => $consumer_key,
-            'redirect_uri' => site_url(add_query_arg()),
+            'redirect_uri' => site_url(add_query_arg([])),
         );
 
         $response = wp_remote_post('https://getpocket.com/v3/oauth/request', array(
