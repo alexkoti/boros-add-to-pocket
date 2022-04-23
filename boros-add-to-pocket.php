@@ -274,6 +274,15 @@ class Boros_Add_To_Pocket_Admin {
             'batp_auth_status'   => get_option('batp_auth_status'),
         );
 
+        /**
+         * Check if is redirect from Pocket authorization page, but check previous value(in case of reloading page with GET param)
+         * 
+         */
+        if( isset($_GET['batp_request_status']) && $_GET['batp_request_status'] == 'app_authorized' && $this->options['batp_auth_status'] != 'access_created' ){
+            update_option('batp_auth_status', 'app_authorized');
+            $this->options['batp_auth_status'] = 'app_authorized';
+        }
+
         add_settings_section(
             'section_apis',
             'Add to Pocket',
@@ -364,6 +373,14 @@ class Boros_Add_To_Pocket_Admin {
                 if( empty($option) && $args['field_name'] != 'batp_consumer_key' ){
                     $disabled = 'disabled';
                 }
+
+                if( $args['field_name'] == 'batp_request_token' && $this->options['batp_auth_status'] != 'token_generated' ){
+                    $disabled = 'disabled';
+                }
+
+                if( $args['field_name'] == 'batp_access_token' && $this->options['batp_auth_status'] != 'app_authorized' ){
+                    $disabled = 'disabled';
+                }
                 
                 // text field output
                 printf(
@@ -430,14 +447,14 @@ class Boros_Add_To_Pocket_Admin {
                 $disabled = '';
                 $append   = '';
 
-                if( empty($this->options['batp_request_token']) || $this->options['batp_auth_status'] != 'generated' ){
+                if( empty($this->options['batp_request_token']) || $this->options['batp_auth_status'] != 'token_generated' ){
                     $disabled = 'disabled';
                 }
 
                 printf(
                     '<a href="https://getpocket.com/auth/authorize?request_token=%s&redirect_uri=%s" id="authorize-link" class="button-secondary %s">Authorize App</a>', 
                     $this->options['batp_request_token'], 
-                    site_url(add_query_arg([])), 
+                    urlencode( site_url(add_query_arg('batp_request_status', 'app_authorized')) ), 
                     $disabled
                 );
             }, 
@@ -503,6 +520,9 @@ class Boros_Add_To_Pocket_Admin {
         ?>
         <button type="button" class="button-secondary" id="request-button" <?php echo $disabled; ?>>Obtain a Request Token</button><span class="spinner"></span>
         <?php
+        if( $this->options['batp_auth_status'] == 'app_authorized' ){
+            echo '<span><br>Curent Request Token already used, please request another one.</span>';
+        }
     }
 
     /**
@@ -513,7 +533,7 @@ class Boros_Add_To_Pocket_Admin {
         $request_token        = $this->options['batp_request_token'];
         $authorization_status = $this->options['batp_auth_status'];
         $disabled             = 'disabled';
-        if( !empty($request_token) && $authorization_status != 'authorized' ){
+        if( !empty($request_token) && $authorization_status == 'app_authorized' ){
             $disabled = '';
         }
         ?>
@@ -759,6 +779,35 @@ class Boros_Add_To_Pocket_Admin {
                     spinner.removeClass('is-active');
                 }
             }
+
+            /**
+             * Remove querystring from url
+             * Required to cleanup window location after redirect from Pocket authorization page
+             * 
+             * @link https://stackoverflow.com/a/1634841/679195
+             * 
+             */
+            function remove_url_parameter(url, parameter){
+                //prefer to use l.search if you have a location/link object
+                var urlparts = url.split('?');   
+                if (urlparts.length >= 2) {
+                    var prefix = encodeURIComponent(parameter) + '=';
+                    var pars = urlparts[1].split(/[&;]/g);
+
+                    //reverse iteration as may be destructive
+                    for (var i = pars.length; i-- > 0;) {    
+                        //idiom for string.startsWith
+                        if (pars[i].lastIndexOf(prefix, 0) !== -1) {  
+                            pars.splice(i, 1);
+                        }
+                    }
+                    return urlparts[0] + (pars.length > 0 ? '?' + pars.join('&') : '');
+                }
+                return url;
+            }
+
+            // remove query string 'batp_request_status' from url onload
+            window.history.replaceState({}, document.title, remove_url_parameter(window.location.href.toString(), 'batp_request_status'));
         });
         </script>
         <?php
@@ -903,10 +952,10 @@ class Boros_Add_To_Pocket_Admin {
         $updated = update_option( $option_name, $option_value );
         if( $updated === true ){
             if( $option_name == 'batp_request_token' ){
-                update_option( 'batp_auth_status', 'generated' );
+                update_option( 'batp_auth_status', 'token_generated' );
             }
             elseif( $option_name == 'batp_access_token' ){
-                update_option( 'batp_auth_status', 'authorized' );
+                update_option( 'batp_auth_status', 'access_created' );
             }
             wp_send_json_success(array('message' => 'Option updated'));
         }
