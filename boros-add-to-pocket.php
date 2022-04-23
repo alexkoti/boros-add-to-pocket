@@ -132,13 +132,19 @@ function boros_add_to_pocket(){
         $body[] = '<h1>Added to Pocket!!!</h1>';
         foreach( $response_body->action_results as $result ){
             //pre($result, 'result', false);
-            if( isset($result->images) ){
+
+            // check images
+            if( isset($result->top_image_url) ){
+                $body[] = sprintf('<img src="%s" class="item-image" alt="%s">', $result->top_image_url, $result->title);
+            }
+            elseif( isset($result->images) ){
                 foreach( $result->images as $index => $image ){
                     if( $index == 1 ){
                         $body[] = sprintf('<img src="%s" class="item-image" alt="%s">', $image->src, $result->title);
                     }
                 }
             }
+
             $body[] = sprintf(
                 '<h2 class="item-title">
                     <img src="https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=24&url=%s" alt="favicon"> 
