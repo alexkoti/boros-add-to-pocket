@@ -27,8 +27,8 @@ All steps are autosaved.
 
 ### ToDo
 
-- [] Bookmarklet page design
-- [] Add tags controls in results page
-- [] Better design in results page
-- [] Custom ajax action name
-- [] Uninstall/Delete wp functions
+- [ ] Bookmarklet page design
+- [ ] Add tags controls in results page
+- [ ] Better design in results page
+- [ ] Custom ajax action name
+- [ ] Uninstall/Delete wp functions
