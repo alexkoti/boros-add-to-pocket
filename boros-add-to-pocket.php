@@ -241,7 +241,7 @@ class Boros_AddToPocket {
      * Action
      * 
      */
-    protected $ajax_action = 'temp';
+    protected static $ajax_action = 'temp';
 
     /**
      * URL args
@@ -270,19 +270,24 @@ class Boros_AddToPocket {
     );
 
     public function __construct(){
-        if( defined('BOROS_POCKET') && isset(BOROS_POCKET['ajax_action']) ){
-            $this->ajax_action = BOROS_POCKET['ajax_action'];
-        }
-        else{
-            $this->ajax_action = get_option('batp_ajax_action', $this->ajax_action);
-        }
-        add_action( "wp_ajax_{$this->ajax_action}", array($this, 'add_to_pocket') );
-        add_action( "wp_ajax_nopriv_{$this->ajax_action}", array($this, 'redirect_login') );
+        self::$ajax_action = self::get_ajax_action();
+        add_action( 'wp_ajax_' . self::$ajax_action, array($this, 'add_to_pocket') );
+        add_action( 'wp_ajax_nopriv_' . self::$ajax_action, array($this, 'redirect_login') );
     }
 
     public function redirect_login(){
         wp_redirect( wp_login_url( add_query_arg([]) ) );
         die();
+    }
+
+    public static function get_ajax_action(){
+        if( defined('BOROS_POCKET') && isset(BOROS_POCKET['ajax_action']) ){
+            $ajax_action = BOROS_POCKET['ajax_action'];
+        }
+        else{
+            $ajax_action = get_option('batp_ajax_action', self::$ajax_action);
+        }
+        return $ajax_action;
     }
 
     public function add_to_pocket(){
@@ -377,10 +382,8 @@ class Boros_AddToPocket {
             $title = 'Added to Pocket';
             $class = 'result';
             $body[] = sprintf(
-                '<header><h1>%sAdded!</h1> <div class="actions"><span class="fav">%s</span> <span class="tag">%s</span></div></header>', 
-                $pocket_icon,
-                $fav_icon,
-                $tag_icon
+                '<header><h1>%sAdded!</h1></header>', 
+                $this->icons['pocket']
             );
             foreach( $response_body->action_results as $result ){
                 //pre($result, 'result', false);
@@ -472,7 +475,8 @@ $batp = new Boros_AddToPocket();
  * 
  */
 function boros_add_to_pocket_bookmarklet(){
-    $ajax_url = add_query_arg('action', 'batp', admin_url('admin-ajax.php'));
+    $action   = Boros_AddToPocket::get_ajax_action();
+    $ajax_url = add_query_arg('action', $action, admin_url('admin-ajax.php'));
     $popup    = ", 'add-to-pocket', 'scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=600,height=600,left=100,top=100'";
     $link     = "javascript:{window.open('{$ajax_url}&url='+encodeURIComponent(window.location.href){$popup})}";
     $bookmark = sprintf('Drag this link to the bookmarks bar: <a href="%s" class="button-secondary">+ add to pocket</a>', $link);
@@ -557,6 +561,7 @@ class Boros_Add_To_Pocket_Admin {
             'batp_request_token' => get_option('batp_request_token'),
             'batp_access_token'  => get_option('batp_access_token'),
             'batp_auth_status'   => get_option('batp_auth_status'),
+            'batp_ajax_action'   => get_option('batp_ajax_action'),
         );
 
         /**
@@ -564,7 +569,6 @@ class Boros_Add_To_Pocket_Admin {
          * 
          */
         if( isset($_GET['batp_request_status']) && $_GET['batp_request_status'] == 'app_authorized' && $this->options['batp_auth_status'] != 'access_created' ){
-            pel('app authorized now');
             update_option('batp_auth_status', 'app_authorized');
             $this->options['batp_auth_status'] = 'app_authorized';
         }
@@ -623,6 +627,12 @@ class Boros_Add_To_Pocket_Admin {
             array(
                 'type'  => 'bookmarklet',
             ),
+            array(
+                'type'  => 'text',
+                'name'  => 'batp_ajax_action',
+                'label' => 'Custom ajax_action name',
+                'extra' => '<br>Define a custom action, replace the default value <code>batp</code>',
+            ),
         );
         foreach( $fields as $field ){
             call_user_func( array($this, "add_setting_field_{$field['type']}"), $field );
@@ -656,7 +666,7 @@ class Boros_Add_To_Pocket_Admin {
             function( $args ){
                 $option = $this->options[ $args['field_name'] ];
                 $disabled = '';
-                if( empty($option) && $args['field_name'] != 'batp_consumer_key' ){
+                if( empty($option) && !in_array($args['field_name'], array('batp_consumer_key', 'batp_ajax_action')) ){
                     $disabled = 'readonly';
                 }
 
@@ -686,6 +696,9 @@ class Boros_Add_To_Pocket_Admin {
 
                 if( is_callable($args['extra']) ){
                     call_user_func( $args['extra'] );
+                }
+                else{
+                    echo $args['extra'];
                 }
             }, 
             'batp_api_keys', 
