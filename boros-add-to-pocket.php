@@ -289,6 +289,7 @@ class Boros_Add_To_Pocket_Admin {
          * 
          */
         if( isset($_GET['batp_request_status']) && $_GET['batp_request_status'] == 'app_authorized' && $this->options['batp_auth_status'] != 'access_created' ){
+            pel('app authorized now');
             update_option('batp_auth_status', 'app_authorized');
             $this->options['batp_auth_status'] = 'app_authorized';
         }
@@ -381,15 +382,15 @@ class Boros_Add_To_Pocket_Admin {
                 $option = $this->options[ $args['field_name'] ];
                 $disabled = '';
                 if( empty($option) && $args['field_name'] != 'batp_consumer_key' ){
-                    $disabled = 'disabled';
+                    $disabled = 'readonly';
                 }
 
                 if( $args['field_name'] == 'batp_request_token' && $this->options['batp_auth_status'] != 'token_generated' ){
-                    $disabled = 'disabled';
+                    $disabled = 'readonly';
                 }
 
                 if( $args['field_name'] == 'batp_access_token' && $this->options['batp_auth_status'] != 'app_authorized' ){
-                    $disabled = 'disabled';
+                    $disabled = 'readonly';
                 }
                 
                 // text field output
