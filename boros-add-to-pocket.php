@@ -250,11 +250,21 @@ class Boros_Add_To_Pocket_Admin {
      * 
      */
     public function __construct(){
+        add_action( 'removable_query_args', array($this, 'remove_args_after_save') );
         add_action( 'admin_init', array($this, 'register_settings') );
         add_action( 'admin_menu', array($this, 'add_menu_page') );
         add_action( 'wp_ajax_batp_get_request_token', array($this, 'get_request_token') );
         add_action( 'wp_ajax_batp_get_access_token', array($this, 'get_access_token') );
         add_action( 'wp_ajax_batp_update_option', array($this, 'update_option') );
+    }
+
+    /**
+     * Remove batp_auth_status querystring, after saving option page
+     * 
+     */
+    function remove_args_after_save( $args ){
+        $args[] = 'batp_request_status';
+        return $args;
     }
 
     /**
@@ -807,7 +817,7 @@ class Boros_Add_To_Pocket_Admin {
             }
 
             // remove query string 'batp_request_status' from url onload
-            window.history.replaceState({}, document.title, remove_url_parameter(window.location.href.toString(), 'batp_request_status'));
+            //window.history.replaceState({}, document.title, remove_url_parameter(window.location.href.toString(), 'batp_request_status'));
         });
         </script>
         <?php
