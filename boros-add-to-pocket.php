@@ -56,13 +56,40 @@ add_action( 'wp_ajax_nopriv_batp', function(){
  */
 add_action( 'wp_ajax_batp', 'boros_add_to_pocket' );
 function boros_add_to_pocket(){
+
+    $pocket_icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M21.7684 2H2.31579C1.05263 2 0 2.95079 0 4.19094V11.2598C0 17.6673 5.38947 23 12.0421 23C18.6526 23 24 17.6673 24 11.2598V4.19094C24 2.95079 22.9895 2 21.7684 2Z" fill="#EF4056"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M18.5749 10.9349L13.0682 16.52C12.7848 16.8691 12.3394 17 12.0154 17C11.6105 17 11.2056 16.8691 10.8817 16.52L5.45602 10.9349C4.88916 10.2804 4.80818 9.18956 5.45602 8.49142C6.06337 7.88055 7.07563 7.79328 7.68298 8.49142L12.0154 12.9857L16.4289 8.49142C16.9957 7.79328 18.008 7.88055 18.5749 8.49142C19.1417 9.18956 19.1417 10.2804 18.5749 10.9349Z" fill="white"/>
+    </svg>';
     
     /*
      * Show bookmarklet if url not set
      * 
      */
     if( empty($_GET['url']) ){
-        boros_add_to_pocket_bookmarklet();
+        printf('<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Add to Pocket Bookmarklet</title>
+            <style>
+            body {font-family:monospace;margin:0 auto;padding:0 1rem;max-width:550px;text-align:center;}
+            h1 {line-height:100%%;}
+            p {line-height:26px;}
+            .button-secondary {background:#ef4056;border-radius:4px;color:#fff;display:inline-block;padding:0 10px;text-decoration:none;}
+            img {background: rgba(0, 0, 0, 0.07);border: 1px solid #8c8f94;padding:4px;margin:20px 0;width:330px;max-width:calc(100%% - 10px);}
+            </style>
+        </head>
+        <body>
+            <h1>
+                %s<br>
+                Add to Pocket Bookmarklet</h1>
+            <p>%s</p>
+            <p><img src="%sbookmarklet.gif" alt="bookmarklet"></p>
+        </body>
+        </html>', $pocket_icon, boros_add_to_pocket_bookmarklet(), plugins_url( '/', __FILE__ ));
         die();
     }
 
@@ -129,7 +156,7 @@ function boros_add_to_pocket(){
 
     if( $response_code == 200 ){
         $title = 'Added to Pocket';
-        $body[] = '<h1>Added to Pocket!!!</h1>';
+        $body[] = sprintf('<h1>%sAdded to Pocket!!!</h1>', $pocket_icon);
         foreach( $response_body->action_results as $result ){
             //pre($result, 'result', false);
 
@@ -148,7 +175,7 @@ function boros_add_to_pocket(){
             $body[] = sprintf(
                 '<h2 class="item-title">
                     <img src="https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=24&url=%s" alt="favicon"> 
-                    <a href="%s">%s</a>
+                    <a href="%s" target="_blank">%s</a>
                 </h2>', 
                 $result->normal_url, 
                 $result->normal_url,
@@ -173,9 +200,11 @@ function boros_add_to_pocket(){
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>%s</title>
         <style>
-        body {font-family:monospace;margin:0 auto;padding:0 1rem;max-width:550px;}
-        .item-image {border:1px solid;display:block;margin:0 auto 1rem;padding:0.5rem;max-height:300px;max-width:calc(100%% - 1rem - 2px);}
-        .item-title {font-size:18px;line-height:26px;}
+        body {font-family:monospace;font-size:14px;line-height:140%%;margin:0 auto;padding:0 1rem;max-width:550px;}
+        svg {margin: 0 10px -2px 0;}
+        .item-image {border:1px solid #ccc;display:block;margin:0 auto 1rem;padding:0.5rem;max-height:300px;max-width:calc(100%% - 1rem - 2px);}
+        .item-title {font-size:18px;}
+        .item-url {word-wrap:break-word;}
         img {vertical-align:text-bottom;}
         </style>
     </head>
@@ -193,14 +222,11 @@ function boros_add_to_pocket(){
  * Bookmarklet
  * 
  */
-function boros_add_to_pocket_bookmarklet( $echo = true ){
+function boros_add_to_pocket_bookmarklet(){
     $ajax_url = add_query_arg('action', 'batp', admin_url('admin-ajax.php'));
     $popup    = ", 'add-to-pocket', 'scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=600,height=600,left=100,top=100'";
     $link     = "javascript:{window.open('{$ajax_url}&url='+encodeURIComponent(window.location.href){$popup})}";
     $bookmark = sprintf('Drag this link to the bookmarks bar: <a href="%s" class="button-secondary">+ add to pocket</a>', $link);
-    if( $echo == true ){
-        echo $bookmark;
-    }
     return $bookmark;
 }
 
@@ -492,8 +518,8 @@ class Boros_Add_To_Pocket_Admin {
             'Bookmarklet', 
             function(){
                 printf(
-                    '<p>%s <span class="info">🛈 how to</span><img src="%sbookmarklet.gif" alt="bookmarklet"></p>', 
-                    boros_add_to_pocket_bookmarklet( false ), 
+                    '<p>%s <span class="info">🛈 how to</span><img src="%sbookmarklet-admin.gif" alt="bookmarklet"></p>', 
+                    boros_add_to_pocket_bookmarklet(), 
                     plugins_url( '/', __FILE__ )
                 );
 

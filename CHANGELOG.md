@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.2] - 2022-04-26
+- Better design in bookmarklet and results page.
+- Separated animated gifs for admin and frontend.
+
 ## [1.0.1] - 2022-04-25
 
 - Check authorization status.
