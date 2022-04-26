@@ -3,7 +3,7 @@
  * Plugin Name: Boros Add to Pocket
  * Plugin URI:  https://alexkoti.com
  * Description: Add URL to Pocket via API. Created because the official Chrome extension stopped working 😢.
- * Version:     1.0.0
+ * Version:     1.0.1
  * Author:      Alex Koti
  * Author URI:  https://alexkoti.com
  * 
@@ -790,35 +790,6 @@ class Boros_Add_To_Pocket_Admin {
                     spinner.removeClass('is-active');
                 }
             }
-
-            /**
-             * Remove querystring from url
-             * Required to cleanup window location after redirect from Pocket authorization page
-             * 
-             * @link https://stackoverflow.com/a/1634841/679195
-             * 
-             */
-            function remove_url_parameter(url, parameter){
-                //prefer to use l.search if you have a location/link object
-                var urlparts = url.split('?');   
-                if (urlparts.length >= 2) {
-                    var prefix = encodeURIComponent(parameter) + '=';
-                    var pars = urlparts[1].split(/[&;]/g);
-
-                    //reverse iteration as may be destructive
-                    for (var i = pars.length; i-- > 0;) {    
-                        //idiom for string.startsWith
-                        if (pars[i].lastIndexOf(prefix, 0) !== -1) {  
-                            pars.splice(i, 1);
-                        }
-                    }
-                    return urlparts[0] + (pars.length > 0 ? '?' + pars.join('&') : '');
-                }
-                return url;
-            }
-
-            // remove query string 'batp_request_status' from url onload
-            //window.history.replaceState({}, document.title, remove_url_parameter(window.location.href.toString(), 'batp_request_status'));
         });
         </script>
         <?php
