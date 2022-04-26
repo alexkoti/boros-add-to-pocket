@@ -19,15 +19,12 @@
  * Access ajax address to get the bookmarklet: 
  * SITE.com/wp-admin/admin-ajax.php?action=batp
  * 
- * 
  * @todo
- * 
  * - options in wp-config constant: 
  *   - custom ajax action name
  *   - add tags
  * - results page:
  *   - better design
- *   - bookmarklet page design (show gif image)
  *   - add tags interface
  *     - add tags javascript
  *     - add tags php request

@@ -27,9 +27,9 @@ All steps are autosaved.
 
 ### ToDo
 
-- [ ] Bookmarklet page design
+- [x] Bookmarklet page design
 - [ ] Add tags controls in results page
-- [ ] Better design in results page
+- [x] Better design in results page
 - [ ] Custom ajax action name
 - [ ] Uninstall/Delete wp functions
 - [ ] Internationalization
@@ -42,3 +42,4 @@ My goals with this plugin are:
     - WordPress options page creation, using native functions.
     - Dynamic interaction with form controls using AJAX requests.
 3. Maintain a public plugin with Github releases.
+4. Challenge: maintain all code in on file.
