@@ -22,7 +22,6 @@
  * @todo
  * - transform function boros_add_to_pocket() into class
  * - options in wp-config constant: 
- *   - custom ajax action name
  *   - add tags
  * - results page:
  *   - better design
@@ -271,6 +270,12 @@ class Boros_AddToPocket {
     );
 
     public function __construct(){
+        if( defined('BOROS_POCKET') && isset(BOROS_POCKET['ajax_action']) ){
+            $this->ajax_action = BOROS_POCKET['ajax_action'];
+        }
+        else{
+            $this->ajax_action = get_option('batp_ajax_action', $this->ajax_action);
+        }
         add_action( "wp_ajax_{$this->ajax_action}", array($this, 'add_to_pocket') );
         add_action( "wp_ajax_nopriv_{$this->ajax_action}", array($this, 'redirect_login') );
     }
@@ -308,7 +313,7 @@ class Boros_AddToPocket {
     }
 
     protected function check_tokens(){
-        if( defined('BOROS_POCKET') ){
+        if( defined('BOROS_POCKET') && isset(BOROS_POCKET['consumer_key']) && isset(BOROS_POCKET['access_token']) ){
             $this->url_args = [
                 'consumer_key' => BOROS_POCKET['consumer_key'],
                 'access_token' => BOROS_POCKET['access_token'],
