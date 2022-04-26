@@ -27,6 +27,7 @@ All steps are autosaved.
 
 ### ToDo
 
+- [ ] Move boros_add_to_pocket() functionality into a class
 - [x] Bookmarklet page design
 - [ ] Add tags controls in results page
 - [x] Better design in results page

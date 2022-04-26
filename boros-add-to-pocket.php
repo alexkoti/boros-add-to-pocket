@@ -20,6 +20,7 @@
  * SITE.com/wp-admin/admin-ajax.php?action=batp
  * 
  * @todo
+ * - transform function boros_add_to_pocket() into class
  * - options in wp-config constant: 
  *   - custom ajax action name
  *   - add tags
@@ -57,6 +58,12 @@ function boros_add_to_pocket(){
     $pocket_icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path fill-rule="evenodd" clip-rule="evenodd" d="M21.7684 2H2.31579C1.05263 2 0 2.95079 0 4.19094V11.2598C0 17.6673 5.38947 23 12.0421 23C18.6526 23 24 17.6673 24 11.2598V4.19094C24 2.95079 22.9895 2 21.7684 2Z" fill="#EF4056"/>
         <path fill-rule="evenodd" clip-rule="evenodd" d="M18.5749 10.9349L13.0682 16.52C12.7848 16.8691 12.3394 17 12.0154 17C11.6105 17 11.2056 16.8691 10.8817 16.52L5.45602 10.9349C4.88916 10.2804 4.80818 9.18956 5.45602 8.49142C6.06337 7.88055 7.07563 7.79328 7.68298 8.49142L12.0154 12.9857L16.4289 8.49142C16.9957 7.79328 18.008 7.88055 18.5749 8.49142C19.1417 9.18956 19.1417 10.2804 18.5749 10.9349Z" fill="white"/>
+    </svg>';
+    $tag_icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bookmark-fill" viewBox="0 0 16 16">
+        <path d="M2 2v13.5a.5.5 0 0 0 .74.439L8 13.069l5.26 2.87A.5.5 0 0 0 14 15.5V2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"></path>
+    </svg>';
+    $fav_icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star-fill" viewBox="0 0 16 16">
+        <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"></path>
     </svg>';
     
     /*
@@ -153,7 +160,12 @@ function boros_add_to_pocket(){
 
     if( $response_code == 200 ){
         $title = 'Added to Pocket';
-        $body[] = sprintf('<h1>%sAdded to Pocket!!!</h1>', $pocket_icon);
+        $body[] = sprintf(
+            '<header><h1>%sAdded!</h1> <div class="actions"><span class="fav">%s</span> <span class="tag">%s</span></div></header>', 
+            $pocket_icon,
+            $fav_icon,
+            $tag_icon
+        );
         foreach( $response_body->action_results as $result ){
             //pre($result, 'result', false);
 
@@ -198,7 +210,12 @@ function boros_add_to_pocket(){
         <title>%s</title>
         <style>
         body {font-family:monospace;font-size:14px;line-height:140%%;margin:0 auto;padding:0 1rem;max-width:550px;}
-        svg {margin: 0 10px -2px 0;}
+        header {display:flex;justify-content:space-between;align-items:center;margin:1rem 0;}
+        h1 {margin: 0;}
+        h1 svg {margin: 0 10px -2px 0;}
+        .actions {display:flex;}
+        .actions span {color:#ef4056;cursor:pointer;width:22px;height:22px;margin-left:10px;}
+        .actions svg {width:100%%;height:100%%;}
         .item-image {border:1px solid #ccc;display:block;margin:0 auto 1rem;padding:0.5rem;max-height:300px;max-width:calc(100%% - 1rem - 2px);}
         .item-title {font-size:18px;}
         .item-url {word-wrap:break-word;}
@@ -212,6 +229,236 @@ function boros_add_to_pocket(){
 
     die();
 }
+
+
+
+/**
+ * Moving primary action to class
+ * 
+ */
+class Boros_AddToPocket {
+
+    /**
+     * Action
+     * 
+     */
+    protected $ajax_action = 'temp';
+
+    /**
+     * URL args
+     * 
+     */
+    protected $url_args = array();
+
+    /**
+     * Icons
+     * 
+     */
+    protected $icons = array(
+        'pocket' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M21.7684 2H2.31579C1.05263 2 0 2.95079 0 4.19094V11.2598C0 17.6673 5.38947 23 12.0421 23C18.6526 23 24 17.6673 24 11.2598V4.19094C24 2.95079 22.9895 2 21.7684 2Z" fill="#EF4056"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M18.5749 10.9349L13.0682 16.52C12.7848 16.8691 12.3394 17 12.0154 17C11.6105 17 11.2056 16.8691 10.8817 16.52L5.45602 10.9349C4.88916 10.2804 4.80818 9.18956 5.45602 8.49142C6.06337 7.88055 7.07563 7.79328 7.68298 8.49142L12.0154 12.9857L16.4289 8.49142C16.9957 7.79328 18.008 7.88055 18.5749 8.49142C19.1417 9.18956 19.1417 10.2804 18.5749 10.9349Z" fill="white"/>
+        </svg>',
+        'tag' => '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bookmark-fill" viewBox="0 0 16 16">
+            <path d="M2 2v13.5a.5.5 0 0 0 .74.439L8 13.069l5.26 2.87A.5.5 0 0 0 14 15.5V2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"></path>
+        </svg>',
+        'star' => '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star" viewBox="0 0 16 16">
+            <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"></path>
+        </svg>',
+        'star_fill' => '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star-fill" viewBox="0 0 16 16">
+            <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"></path>
+        </svg>',
+    );
+
+    public function __construct(){
+        add_action( "wp_ajax_{$this->ajax_action}", array($this, 'add_to_pocket') );
+        add_action( "wp_ajax_nopriv_{$this->ajax_action}", array($this, 'redirect_login') );
+    }
+
+    public function redirect_login(){
+        wp_redirect( wp_login_url( add_query_arg([]) ) );
+        die();
+    }
+
+    public function add_to_pocket(){
+        
+        $this->check_url();
+
+        $this->check_tokens();
+
+        $this->request();
+
+        die();
+    }
+
+    protected function check_url(){
+        if( empty($_GET['url']) ){
+            $body = sprintf(
+                '%s<br><h1>Add to Pocket Bookmarklet</h1>
+                <p>%s</p>
+                <p><img src="%sbookmarklet.gif" alt="bookmarklet" class="img howto"></p>',
+                $this->icons['pocket'], 
+                boros_add_to_pocket_bookmarklet(), 
+                plugins_url( '/', __FILE__ )
+            );
+
+            $this->html_output( 'Add to Pocket Bookmarklet', $body, 'bookmarklet' );
+            die();
+        }
+    }
+
+    protected function check_tokens(){
+        if( defined('BOROS_POCKET') ){
+            $this->url_args = [
+                'consumer_key' => BOROS_POCKET['consumer_key'],
+                'access_token' => BOROS_POCKET['access_token'],
+            ];
+        }
+        else{
+            $this->url_args = [
+                'consumer_key' => get_option('batp_consumer_key'),
+                'access_token' => get_option('batp_access_token'),
+            ];
+        }
+    
+        if( empty($this->url_args['consumer_key']) || empty($this->url_args['access_token']) ){
+            wp_die('Add to Pocket: API keys not set.');
+        }
+    }
+
+    protected function request(){
+
+        /*
+         * Build json params
+         * 
+         */
+        $params = [
+            'actions' => [
+                [
+                    'action' => 'add',
+                    'url'    => sanitize_url( $_GET['url'] ),
+                ],
+            ],
+        ];
+        
+        // test force error on add
+        //$this->url_args['access_token'] = 'force-error';
+
+        /**
+         * Build request URL
+         * 
+         */
+        $pocket_url = add_query_arg($this->url_args, 'https://getpocket.com/v3/send');
+    
+        /*
+         * Make request to GetPocket API
+         * 
+         */
+        $data = wp_remote_post($pocket_url, [
+            'headers'     => ['Content-Type' => 'application/json; charset=utf-8'],
+            'body'        => json_encode($params),
+            'method'      => 'POST',
+            'data_format' => 'body',
+        ]);
+    
+        $response_code    = wp_remote_retrieve_response_code( $data );
+        $response_message = wp_remote_retrieve_response_message( $data );
+        $response_body    = json_decode( wp_remote_retrieve_body( $data ) );
+    
+        $body  = array();
+        $title = '';
+    
+        if( $response_code == 200 ){
+            $title = 'Added to Pocket';
+            $class = 'result';
+            $body[] = sprintf(
+                '<header><h1>%sAdded!</h1> <div class="actions"><span class="fav">%s</span> <span class="tag">%s</span></div></header>', 
+                $pocket_icon,
+                $fav_icon,
+                $tag_icon
+            );
+            foreach( $response_body->action_results as $result ){
+                //pre($result, 'result', false);
+    
+                // check images
+                if( isset($result->top_image_url) ){
+                    $body[] = sprintf('<img src="%s" class="img item-image" alt="%s">', $result->top_image_url, $result->title);
+                }
+                elseif( isset($result->images) ){
+                    foreach( $result->images as $index => $image ){
+                        if( $index == 1 ){
+                            $body[] = sprintf('<img src="%s" class="img item-image" alt="%s">', $image->src, $result->title);
+                        }
+                    }
+                }
+    
+                $body[] = sprintf(
+                    '<h2 class="item-title">
+                        <img src="https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=24&url=%s" alt="favicon"> 
+                        <a href="%s" target="_blank">%s</a>
+                    </h2>', 
+                    $result->normal_url, 
+                    $result->normal_url,
+                    $result->title
+                );
+                $body[] = sprintf('<p class="item-url">%s</p>', $result->normal_url);
+                $body[] = sprintf('<hr><p class="item-excerpt">%s</p>', $result->excerpt);
+            }
+        }
+        else{
+            $title  = 'Request error';
+            $body[] = sprintf('<h1>%sAdd to Pocket</h1>', $this->icons['pocket']);
+            $body[] = '<h2>Request error</h2>';
+            $body[] = sprintf('<p>%s %s</p>', $response_code, $response_message);
+            $class = 'error';
+        }
+
+        $this->html_output( $title, implode('', $body), $class );
+    }
+
+    protected function css(){
+		ob_start();
+        ?>
+        <style>
+        body {font-family:monospace;font-size:14px;margin:1rem auto;padding:0 1rem;max-width:550px;}
+        body.bookmarklet, body.error {text-align:center;}
+        header {display:flex;justify-content:space-between;align-items:center;margin:1rem 0;}
+        h1 {margin: 0;}
+        h1 svg {margin: 0 10px -2px 0;}
+        .actions {display:flex;}
+        .actions span {color:#ef4056;cursor:pointer;width:22px;height:22px;margin-left:10px;}
+        .actions svg {width:100%;height:100%;}
+        .item-image {display:block;margin:0 auto 1rem;max-height:300px;}
+        .item-title {font-size:18px;}
+        .item-title img {vertical-align: text-bottom;}
+        .item-url {word-wrap:break-word;}
+        .button-secondary {background:#ef4056;border-radius:4px;color:#fff;display:inline-block;padding:5px 10px;text-decoration:none;}
+        .img {background: rgba(0, 0, 0, 0.07);border: 1px solid #ccc;padding:0.3rem;max-width:calc(100% - 0.6rem - 2px);}
+        .howto {margin:20px 0;width:330px;}
+        </style>
+        <?php
+		$input = ob_get_contents();
+		ob_end_clean();
+        return $input;
+    }
+
+    protected function html_output( $title, $body, $class = '' ){
+        printf('<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>%s</title>
+            %s
+        </head>
+        <body class="%s">
+            %s
+        </body>
+        </html>', $title, $this->css(), $class, $body);
+    }
+}
+$batp = new Boros_AddToPocket();
 
 
 
