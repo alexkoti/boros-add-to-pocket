@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.3] - 2022-04-26
+- Moving primary action to class
+
 ## [1.0.2] - 2022-04-26
 - Better design in bookmarklet and results page.
 - Separated animated gifs for admin and frontend.
