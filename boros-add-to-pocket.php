@@ -21,16 +21,12 @@
  * 
  * @todo
  * - transform function boros_add_to_pocket() into class
- * - options in wp-config constant: 
- *   - add tags
  * - results page:
- *   - better design
  *   - add tags interface
  *     - add tags javascript
  *     - add tags php request
- * - admin page:
- *   - option: custom ajax action name
- *   - option: delete tokens
+ * - Uninstall/Delete hooks
+ * - Internationalization
  * 
  */
 
@@ -234,11 +230,15 @@ function boros_add_to_pocket(){
 /**
  * Moving primary action to class
  * 
+ * @todo documentation
+ * 
  */
 class Boros_AddToPocket {
 
     /**
      * Action
+     * 
+     * @todo value to 'batp'
      * 
      */
     protected static $ajax_action = 'temp';
@@ -473,6 +473,8 @@ $batp = new Boros_AddToPocket();
 /**
  * Bookmarklet
  * 
+ * @todo move to Boros_AddToPocket as a static function
+ * 
  */
 function boros_add_to_pocket_bookmarklet(){
     $action   = Boros_AddToPocket::get_ajax_action();
@@ -488,6 +490,8 @@ function boros_add_to_pocket_bookmarklet(){
 /**
  * Init Admin controls if constant not defined
  * 
+ * @todo move to Boros_AddToPocket construct
+ * 
  */
 if( !defined('BOROS_POCKET') ){
     $boros_add_to_pocket = new Boros_Add_To_Pocket_Admin();
@@ -502,7 +506,7 @@ if( !defined('BOROS_POCKET') ){
 class Boros_Add_To_Pocket_Admin {
 
     /**
-     * Whitelist of options names allowed to be saved
+     * Whitelist of options names allowed to be saved in ajax requests
      * 
      */
     protected $allowed_options = array(
@@ -1191,6 +1195,8 @@ class Boros_Add_To_Pocket_Admin {
 
     /**
      * Update single option
+     * 
+     * @todo set autoload 'no'
      * 
      */
     public function update_option(){

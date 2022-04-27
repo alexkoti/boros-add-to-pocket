@@ -10,7 +10,7 @@ Generate API keys via curl or Postman (ref: https://getpocket.com/developer/docs
 
 Register constant BOROS_POCKET in wp-config.php:
 
-`define( 'BOROS_POCKET', array('consumer_key' => 'XXXX', 'access_token' => 'XXXX') );`
+`define( 'BOROS_POCKET', array('consumer_key' => 'XXXX', 'access_token' => 'XXXX', 'ajax_action' => 'XXXX') );`
 
 Access ajax address to get the bookmarklet: 
 SITE.com/wp-admin/admin-ajax.php?action=batp
@@ -31,7 +31,7 @@ All steps are autosaved.
 - [x] Bookmarklet page design
 - [ ] Add tags controls in results page
 - [x] Better design in results page
-- [ ] Custom ajax action name
+- [x] Custom ajax action name
 - [ ] Uninstall/Delete wp functions
 - [ ] Internationalization
 
