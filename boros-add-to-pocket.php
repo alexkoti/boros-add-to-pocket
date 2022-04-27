@@ -3,7 +3,7 @@
  * Plugin Name: Boros Add to Pocket
  * Plugin URI:  https://alexkoti.com
  * Description: Add URL to Pocket via API. Created because the official Chrome extension stopped working 😢.
- * Version:     1.0.1
+ * Version:     1.0.3
  * Author:      Alex Koti
  * Author URI:  https://alexkoti.com
  * 
