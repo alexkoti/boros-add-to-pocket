@@ -44,7 +44,7 @@ class Boros_AddToPocket {
      * @todo value to 'batp'
      * 
      */
-    protected static $ajax_action = 'temp';
+    protected static $ajax_action = 'batp_save_url';
 
     /**
      * URL args
@@ -526,7 +526,7 @@ class Boros_Add_To_Pocket_Admin {
                 'type'  => 'text',
                 'name'  => 'batp_ajax_action',
                 'label' => 'Custom ajax_action name',
-                'extra' => '<br>Define a custom action, replace the default value <code>batp</code>',
+                'extra' => '<br>Define a custom action, replace the default value <code>batp_save_url</code>. That value is used in ajax request an must be secret. If you change this, you need to update de bookmarklet above.',
             ),
         );
         foreach( $fields as $field ){
