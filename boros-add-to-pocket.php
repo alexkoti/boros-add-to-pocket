@@ -77,9 +77,10 @@ class Boros_AddToPocket {
      * 
      */
     public function __construct(){
-        self::$ajax_action = self::get_ajax_action();
-        add_action( 'wp_ajax_' . self::$ajax_action, array($this, 'add_to_pocket') );
-        add_action( 'wp_ajax_nopriv_' . self::$ajax_action, array($this, 'redirect_login') );
+        $action = self::$ajax_action = self::get_ajax_action();
+        add_action( "wp_ajax_nopriv_{$action}", array($this, 'redirect_login') );
+        add_action( "wp_ajax_{$action}", array($this, 'add_url') );
+        add_action( "wp_ajax_{$action}_fav", array($this, 'add_fav') );
     }
 
     /**
@@ -109,13 +110,32 @@ class Boros_AddToPocket {
      * Proccess logged request
      * 
      */
-    public function add_to_pocket(){
+    public function add_url(){
+        $this->request( 'add_url' );
+    }
+
+    public function add_fav(){
+        $this->request( 'add_fav' );
+    }
+
+    protected function request( $action ){
         
         $this->check_url();
 
         $this->check_tokens();
 
-        $this->add_url_request();
+        switch( $action ){
+            case 'add_url':
+                $this->request_add_url();
+                break;
+
+            case 'add_fav':
+                $this->request_add_fav();
+                break;
+
+            default;
+                break;
+        }
 
         die();
     }
@@ -167,7 +187,7 @@ class Boros_AddToPocket {
      * Execute the request to add URL to pocket
      * 
      */
-    protected function add_url_request(){
+    protected function request_add_url(){
 
         /*
          * Build json params
@@ -213,7 +233,14 @@ class Boros_AddToPocket {
             $title = 'Added to Pocket';
             $class = 'result';
             $body[] = sprintf(
-                '<header><h1>%sAdded!</h1></header>', 
+                '<header>
+                    <h1>%sAdded!</h1> 
+                    <div class="actions"><span class="fav">%s</span> <span class="tag">%s</span></div>
+                    <div class="tags-list"><span>Lorem</span> <span>Ipsum</span> <span>Dolor Sit</span></div>
+                </header>', 
+                $this->icons['pocket'],
+                $this->icons['star'],
+                $this->icons['tag'],
                 $this->icons['pocket']
             );
             foreach( $response_body->action_results as $result ){
@@ -232,10 +259,11 @@ class Boros_AddToPocket {
                 }
     
                 $body[] = sprintf(
-                    '<h2 class="item-title">
+                    '<h2 class="item-title" data-item_id="%s">
                         <img src="https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=24&url=%s" alt="favicon"> 
                         <a href="%s" target="_blank">%s</a>
                     </h2>', 
+                    $result->item_id,
                     $result->normal_url, 
                     $result->normal_url,
                     $result->title
@@ -265,12 +293,15 @@ class Boros_AddToPocket {
         <style>
         body {font-family:monospace;font-size:14px;margin:1rem auto;padding:0 1rem;max-width:550px;}
         body.bookmarklet, body.error {text-align:center;}
-        header {display:flex;justify-content:space-between;align-items:center;margin:1rem 0;}
+        header {display:flex;justify-content:space-between;flex-wrap:wrap;align-items:center;margin:1rem 0;}
         h1 {margin: 0;}
         h1 svg {margin: 0 10px -2px 0;}
-        .actions {display:flex;}
+        .actions {display:flex;display:none;}
         .actions span {color:#ef4056;cursor:pointer;width:22px;height:22px;margin-left:10px;}
+        .actions .disabled {pointer-events:none;opacity:0.5;}
         .actions svg {width:100%;height:100%;}
+        .tags-list {display:flex;justify-content:flex-end;gap:5px;width:100%;display:none;}
+        .tags-list span {background:#ccc;border-radius:12px;cursor:pointer;font-size:80%;padding:4px 10px;}
         .item-image {display:block;margin:0 auto 1rem;max-height:300px;}
         .item-title {font-size:18px;}
         .item-title img {vertical-align: text-bottom;}
@@ -279,6 +310,26 @@ class Boros_AddToPocket {
         .img {background: rgba(0, 0, 0, 0.07);border: 1px solid #ccc;padding:0.3rem;max-width:calc(100% - 0.6rem - 2px);}
         .howto {margin:20px 0;width:330px;}
         </style>
+        <?php
+        $input = ob_get_contents();
+        ob_end_clean();
+        return $input;
+    }
+
+    protected function js(){
+        ob_start();
+        ?>
+        <script src="<?php echo site_url('/wp-includes/js/jquery/jquery.min.js'); ?>" id="jquery-core-js"></script>
+        <script>
+        jQuery(document).ready(function($){
+            console.log('batp');
+            $('.actions .fav').on('click', function(){
+                var item_id = $('.item-title').attr('data-item_id');
+                console.log('add fav:' + item_id);
+                $(this).addClass('disabled');
+            });
+        });
+        </script>
         <?php
         $input = ob_get_contents();
         ob_end_clean();
@@ -301,8 +352,9 @@ class Boros_AddToPocket {
         </head>
         <body class="%s">
             %s
+            %s
         </body>
-        </html>', $title, $this->css(), $class, $body);
+        </html>', $title, $this->css(), $class, $body, $this->js());
     }
 }
 $batp = new Boros_AddToPocket();
